@@ -58,7 +58,7 @@ public class UserRegisterController {
 	}
 
 	@GetMapping("/myprofile/{userId}")
-	public ResponseEntity<ResponseObject> getAllEmployees(@PathVariable(value = "userId") String userid) {
+	public ResponseEntity<ResponseObject> getUser(@PathVariable(value = "userId") String userid) {
 		
 		
 		int userId = 0;

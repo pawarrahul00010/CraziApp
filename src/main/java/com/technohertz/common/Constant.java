@@ -23,6 +23,8 @@ public class Constant {
 	public static final String POSTCARD = "POSTCARD";
 	
 	public static final String GREETINGCARD = "GREETINGCARD";
+	
+	public static final String GREETING = "GREETING";
 
 	public static final String VIDEO = "VIDEO";
 	

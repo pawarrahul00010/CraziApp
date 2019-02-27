@@ -70,7 +70,7 @@ public class LiveFeedController {
     	UserProfile fileName = fileStorageService.storeLiveFeedFile(file,saySomething, userId,constant.LIVEFEED);
 
      
-        Object obj=new UploadFileResponse(fileName.getFiles().get(0).getFilePath(),fileName.getFiles().get(0).getFilePath(),
+        Object obj=new UploadFileResponse(fileName.getFiles().get(fileName.getFiles().size()-1).getFilePath(),fileName.getFiles().get(fileName.getFiles().size()-1).getFilePath(),
                 file.getContentType(), file.getSize());
         
         if (!file.isEmpty()||userId!=null) {

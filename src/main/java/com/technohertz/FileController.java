@@ -19,6 +19,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
@@ -55,6 +57,10 @@ public class FileController {
 	@Autowired
 	private UserRegisterRepository registerRepository;
 	
+	 @Autowired
+	private Constant constant;
+
+	
     @Autowired
 	private ResponseObject response;
     
@@ -66,18 +72,28 @@ public class FileController {
     	UserProfile fileName = fileStorageService.storeFile(file, userId,fileType);
 
      
-        Object obj=new UploadFileResponse(fileName.getFiles().get(0).getFilePath(),fileName.getFiles().get(0).getFilePath(),
-                file.getContentType(), file.getSize());
-        if (!file.isEmpty()||userId!=null) {
-			response.setMessage("your File is uploaded successfully");
+        if (fileName != null) {
+			Object obj = new UploadFileResponse(fileName.getFiles().get(fileName.getFiles().size() - 1).getFilePath(),
+					fileName.getFiles().get(0).getFilePath(), file.getContentType(), file.getSize());
+			if (!file.isEmpty() || userId != null) {
+				response.setMessage("your File is uploaded successfully");
 
-			response.setData(obj);
-			response.setError("0");
-			response.setStatus("SUCCESS");
+				response.setData(obj);
+				response.setError("0");
+				response.setStatus("SUCCESS");
 
-			return ResponseEntity.ok(response);
-		} else {
-			response.setMessage("your File is not uploaded");
+				return ResponseEntity.ok(response);
+			} else {
+				response.setMessage("your File is not uploaded");
+
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("FAIL");
+
+				return ResponseEntity.ok(response);
+			} 
+		}else {
+			response.setMessage("User does not exist please register first");
 
 			response.setData(empty);
 			response.setError("1");
@@ -364,5 +380,67 @@ public class FileController {
 		}
 	
 	}
+	
+    @SuppressWarnings({ "static-access", "unused" })
+	@RequestMapping(value ="/greet" ,method=RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public  ResponseEntity<ResponseObject> uploadVideos(@RequestParam("file") MultipartFile file,
+    		@RequestParam(value = "userId") Integer  userId,@RequestParam(value = "saySomething") String  saySomething) {
+
+    	UserProfile fileName = fileStorageService.storeLiveFeedFile(file,saySomething, userId,constant.GREETINGCARD);
+
+     
+        Object obj=new UploadFileResponse(fileName.getFiles().get(fileName.getFiles().size()-1).getFilePath(),fileName.getFiles().get(0).getFilePath(),
+                file.getContentType(), file.getSize());
+        
+        if (fileName != null) {
+			if (!file.isEmpty() || userId != null) {
+				response.setMessage("your File is uploaded successfully");
+
+				response.setData(obj);
+				response.setError("0");
+				response.setStatus("SUCCESS");
+
+				return ResponseEntity.ok(response);
+			} else {
+				response.setMessage("your File is not uploaded");
+
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("FAIL");
+
+				return ResponseEntity.ok(response);
+			} 
+		}else {
+			response.setMessage("User does not exist please register first");
+
+			response.setData(empty);
+			response.setError("1");
+			response.setStatus("FAIL");
+
+			return ResponseEntity.ok(response);
+		}
+    }
+	
+	@GetMapping("/getAllGreet")
+	public ResponseEntity<ResponseObject> getAllProfilesById() {
 		
+		List<MediaFiles> likedUsers=fileStorageService.getAllGreetings();
+		List<GetImage> image=new ArrayList<GetImage>();
+
+		for(MediaFiles mediaFiles :likedUsers) {
+			GetImage img = new GetImage();
+			img.setUser(mediaFiles.getFilePath());
+			img.setfileId(mediaFiles.getFileId());
+			image.add(img);
+		}
+
+		response.setError("0");	
+		response.setMessage("successfully fetched");
+		response.setData(image);
+		response.setStatus("SUCCESS");
+		return ResponseEntity.ok(response);
+		
+	}
+
+
 }

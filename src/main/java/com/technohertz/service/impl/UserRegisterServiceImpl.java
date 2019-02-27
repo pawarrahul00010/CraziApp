@@ -51,7 +51,7 @@ public class UserRegisterServiceImpl implements IUserRegisterService {
 				userRegisterRepo.deleteById(userId); 
 			} 
 		}
-	@Cacheable(value="craziCache",key="#userId",unless="#result==null")
+	//@Cacheable(value="craziCache",key="#userId",unless="#result==null")
 	@Override 
 	public UserRegister getOneById(int userId) { 
 		return
@@ -63,7 +63,7 @@ public class UserRegisterServiceImpl implements IUserRegisterService {
 
 		return list; 
 	}
-	@Cacheable(value="craziCache",key="#userId",unless="#result==null")
+	//@Cacheable(value="craziCache",key="#userId",unless="#result==null")
 	@Override 
 	public Page<UserRegister> getAll(Specification<UserRegister> s, Pageable pageable)
 		{ 
@@ -77,26 +77,26 @@ public class UserRegisterServiceImpl implements IUserRegisterService {
 //	List<UserRegister> user=userRegisterRepo.findByUserNameAndPassword(userName, password);
 //		return user;
 //	}
-	@Cacheable(value="userNameCache",key="#userName",unless="#result==null")
+	//@Cacheable(value="userNameCache",key="#userName",unless="#result==null")
 	@Override
 	public List<UserRegister> findByUserName(String userName) {
 		List<UserRegister> userList=userRegisterRepo.findByUserName(userName);
 		return userList;
 	}
-	@Cacheable(value="mobileNumberCache",key="#user",unless="#result==null")
+	//@Cacheable(value="mobileNumberCache",key="#user",unless="#result==null")
 	@Override
 	public List<UserRegister> findByMobileNumber(String user) {
 		List<UserRegister> userList=userRegisterRepo.findByMobileNumber(user);
 		return userList;
 	}
 
-	@Cacheable(value="craziCache",key="#userId",unless="#result==null")
+	//@Cacheable(value="craziCache",key="#userId",unless="#result==null")
 	@Override
 	public List<UserRegister> getById(Integer userId) {
 		List<UserRegister> idList=userRegisterRepo.getById(userId);
 		return idList;
 	}
-	@Cacheable(value="craziCache",key="#mobilNumber,userName",unless="#result==null")
+	//@Cacheable(value="craziCache",key="#mobilNumber,userName",unless="#result==null")
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<UserRegister> findByMobileOrUserName(Long mobilNumber, String userName) {

@@ -104,6 +104,16 @@ public class UserContactServiceImpl implements IUserContactService {
 		return entityManager.createNativeQuery("select contact_number from user_contact where userId=:userId")
 				 .setParameter("userId", userId).getResultList();
 	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<UserContact> getContactByMobileNumber(String mobilNumber) {
+		
+		return entityManager.createQuery("select itm from UserContact itm  where " +
+				" itm.contactNumber=:contactNumber")
+				.setParameter("contactNumber", mobilNumber)
+				.getResultList();
+	}
 	
 
 

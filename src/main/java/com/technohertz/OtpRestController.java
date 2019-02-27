@@ -102,7 +102,7 @@ public class OtpRestController {
 		if(userid.equals("") || userid == null || OTP.equals("") || OTP == null ) {
 			
 			response.setError("1");
-			response.setMessage("wrong userRegister data please enter correct value");
+			response.setMessage("wrong userId and otp please enter correct value");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			return ResponseEntity.ok(response);
@@ -119,7 +119,7 @@ public class OtpRestController {
 			} catch (NumberFormatException e) {
 				
 				response.setError("1");
-				response.setMessage("wrong userId and OTP please enter numeric value");
+				response.setMessage("wrong userId and otp please enter numeric value");
 				response.setData(empty);
 				response.setStatus("FAIL");
 				return ResponseEntity.ok(response);

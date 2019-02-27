@@ -29,6 +29,7 @@ import com.technohertz.repo.MediaFileRepo;
 import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IMediaFileService;
+import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.ResponseObject;
 
@@ -40,6 +41,7 @@ public class UserProfileController {
 	@Autowired
 	private UserProfileRepository userprofilerepo;
 	
+		
 	@Autowired
 	private Empty empty;
 	
@@ -413,30 +415,42 @@ public class UserProfileController {
 
     @PostMapping("/uploadFile")
 	public ResponseEntity<ResponseObject> updateProfile(@RequestParam("file") MultipartFile file,@RequestParam(value = "userId") Integer userId) {
-		UserProfile userProfile = fileStorageService.saveProfile(file,userId);
 		
-		MediaFiles files=mediaFileRepo.getOne(Integer.valueOf(String.valueOf(userProfile.getFiles().get(userProfile.getFiles().size()-1).getFileId())));
+    	UserProfile userProfile = fileStorageService.saveProfile(file,userId);
 		
-	
+		if (userProfile != null ) {
+			MediaFiles files = mediaFileRepo.getOne(Integer.valueOf(
+					String.valueOf(userProfile.getFiles().get(userProfile.getFiles().size() - 1).getFileId())));
+			
+			
+			
+			Object obj = new UploadFileResponse(userProfile.getCurrentProfile(), userProfile.getCurrentProfile(),
+					file.getContentType(), file.getSize());
+			if (!file.isEmpty() || userId != null) {
+				response.setMessage("your Profile Image updated successfully");
 
-		Object obj= new UploadFileResponse(userProfile.getCurrentProfile(),userProfile.getCurrentProfile(),
-				file.getContentType(), file.getSize());
-		if (!file.isEmpty()||userId!=null) {
-			response.setMessage("your Profile Image updated successfully");
+				response.setData(obj);
+				response.setError("0");
+				response.setStatus("SUCCESS");
 
-			response.setData(obj);
-			response.setError("0");
-			response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+			} else {
+				response.setMessage("your Profile Image not updated");
 
-			return ResponseEntity.ok(response);
-		} else {
-			response.setMessage("your Profile Image not updated");
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("FAIL");
 
-			response.setData(empty);
-			response.setError("1");
-			response.setStatus("FAIL");
+				return ResponseEntity.ok(response);
+			} 
+		}else {
+		response.setMessage("User does not exist please register first");
 
-			return ResponseEntity.ok(response);
+		response.setData(empty);
+		response.setError("1");
+		response.setStatus("FAIL");
+
+		return ResponseEntity.ok(response);
 		}
 	}
 

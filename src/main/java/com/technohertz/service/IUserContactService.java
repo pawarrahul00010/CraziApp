@@ -29,5 +29,7 @@ public interface IUserContactService {
 	
 	void deleteByUserId(int userId);
 	
+	public List<UserContact> getContactByMobileNumber(String mobilNumber);
+	
 
 }

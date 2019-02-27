@@ -97,14 +97,7 @@ public class UserRegister implements Serializable {
 	@JoinColumn(name="BIOMETRIC_ID")
 	private List<Biometric> biometric=new ArrayList<Biometric>();
 
-	/*
-	 * @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	 * 
-	 * @OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)
-	 * 
-	 * @JoinColumn(name="userid") private List<GroupProfile> groupList=new
-	 * ArrayList<GroupProfile>();
-	 */	
+	
 	@JsonIgnore
 	@ManyToMany(cascade=CascadeType.ALL)
 	@JoinTable (name = "user_groups", joinColumns=

@@ -27,10 +27,15 @@ import com.technohertz.exception.MyFileNotFoundException;
 import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
+import com.technohertz.model.UserContact;
 import com.technohertz.model.UserProfile;
+import com.technohertz.model.UserRegister;
 import com.technohertz.repo.GroupProfileRepository;
 import com.technohertz.repo.MediaFileRepo;
+import com.technohertz.repo.UserContactRepository;
 import com.technohertz.repo.UserProfileRepository;
+import com.technohertz.service.IUserContactService;
+import com.technohertz.service.IUserRegisterService;
 import com.technohertz.util.DateUtil;
 import com.technohertz.util.FileStorageProperties;
 
@@ -43,9 +48,19 @@ public class FileStorageService {
 
 	@Autowired
 	private MediaFileRepo mediaFileRepo;
+	
+	@Autowired
+	private IUserContactService userContactService;
 
+	
+	@Autowired
+	private IUserRegisterService userRegisterService; 
+
+	
 	@Autowired
 	private UserProfileRepository userprofileRepo;
+	@Autowired
+	private UserContactRepository userContactRepo;
 
 	@Autowired
 	private GroupProfileRepository groupProfileRepository;
@@ -58,6 +73,9 @@ public class FileStorageService {
 
 	@Autowired
 	DateUtil dateUtil = new DateUtil();
+	
+	@Autowired
+	Constant Constant ;
 
 	@Autowired
 	public FileStorageService(FileStorageProperties fileStorageProperties) {
@@ -109,40 +127,59 @@ public class FileStorageService {
 	
 
 	public UserProfile storeFile(MultipartFile file, int userId,String fileType) {
-		String fileName = StringUtils.cleanPath(String.valueOf(userId)+System.currentTimeMillis()+getFileExtension(file));
-		   String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-	                .path("/downloadFile/")
-	                .path(String.valueOf(fileName))
-	                .toUriString();
 		
-		try {
-			if (fileName.contains("..")) {
-				throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
-			}
 			List<UserProfile> userprofile = null;
 			userprofile = userprofileRepo.findById(userId);
-			MediaFiles mediaFile = new MediaFiles();
-			mediaFile.setFilePath(fileDownloadUri);
-			mediaFile.setFileType(fileType);
-			mediaFile.setIsLiked(false);
-			mediaFile.setLikes(0l);
-			mediaFile.setRating(0l);
-			mediaFile.setIsRated(false);
-			mediaFile.setIsBookMarked(false);
-			mediaFile.setCreateDate(dateUtil.getDate());
-			mediaFile.setLastModifiedDate(dateUtil.getDate());
-			userprofile.get(0).getFiles().add(mediaFile);
-			Path targetLocation = this.fileStorageLocation.resolve(fileName);
-			Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
 			
-			return userprofileRepo.save(userprofile.get(0));
-		} catch (IOException ex) {
-			throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+					if (!userprofile.isEmpty()) {
+					String fileName = StringUtils
+							.cleanPath(String.valueOf(userId) + System.currentTimeMillis() + getFileExtension(file));
+					String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
+							.path(String.valueOf(fileName)).toUriString();
+					try {
+						if (fileName.contains("..")) {
+							throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
+						}
+					
+						MediaFiles mediaFile = new MediaFiles();
+						mediaFile.setFilePath(fileDownloadUri);
+						mediaFile.setFileType(fileType);
+						mediaFile.setIsLiked(false);
+						mediaFile.setLikes(0l);
+						mediaFile.setRating(0l);
+						mediaFile.setIsRated(false);
+						mediaFile.setIsBookMarked(false);
+						mediaFile.setCreateDate(dateUtil.getDate());
+						mediaFile.setLastModifiedDate(dateUtil.getDate());
+						userprofile.get(0).getFiles().add(mediaFile);
+						Path targetLocation = this.fileStorageLocation.resolve(fileName);
+						Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+	
+						
+						return userprofileRepo.save(userprofile.get(0));
+						
+				} catch (IOException ex) {
+					
+					throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+					
+				}
+			} else {
+				
+				return null;
+			} 
 		}
-	}
+	
 	
 	public UserProfile saveProfile(MultipartFile file, int userId) {
 
+		List<UserProfile> userprofile = null;
+		
+
+		userprofile = userprofileRepo.findById(userId);
+		
+		List<UserRegister> userList = userRegisterService.getById(userId);
+		
+		MediaFiles mfile = new MediaFiles();
 		String fileName = StringUtils
 				.cleanPath(String.valueOf(userId) + System.currentTimeMillis() + getFileExtension(file));
 		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -154,28 +191,53 @@ public class FileStorageService {
 			if (fileName.contains("..")) {
 				throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
 			}
-			List<UserProfile> userprofile = null;
-			MediaFiles mfile = new MediaFiles();
-			userprofile = userprofileRepo.findById(userId);
-			mfile.setFilePath(fileDownloadUri );
-			mfile.setIsLiked(false);
-			mfile.setLikes(0l);
-			mfile.setRating(0l);
-			mfile.setIsRated(false);
-			mfile.setIsBookMarked(false);
-			mfile.setCreateDate(dateUtil.getDate());
-			mfile.setLastModifiedDate(dateUtil.getDate());
-			mfile.setFileType("PROFILE");
-			userprofile.get(0).setProfileId(userId);
-			userprofile.get(0).setCurrentProfile(fileDownloadUri);
-			userprofile.get(0).getFiles().add(mfile);
-			Path targetLocation = this.fileStorageLocation.resolve(fileName);
-			Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-			return userprofileRepo.save(userprofile.get(0));
-		} catch (IOException ex) {
-			throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+			
+			List<UserContact> contactList= userContactService.getContactByMobileNumber(userList.get(0).getMobilNumber());
+			
+					if (!userList.isEmpty()) {
+						
+						if (!userprofile.isEmpty()) {
+							mfile.setFilePath(fileDownloadUri);
+							mfile.setIsLiked(false);
+							mfile.setLikes(0l);
+							mfile.setRating(0l);
+							mfile.setIsRated(false);
+							mfile.setIsBookMarked(false);
+							mfile.setCreateDate(dateUtil.getDate());
+							mfile.setLastModifiedDate(dateUtil.getDate());
+							mfile.setFileType("PROFILE");
+							userprofile.get(0).setProfileId(userId);
+							userprofile.get(0).setCurrentProfile(fileDownloadUri);
+							userprofile.get(0).getFiles().add(mfile);
+							Path targetLocation = this.fileStorageLocation.resolve(fileName);
+							Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+							
+							for(UserContact userContact : contactList) {
+								
+								userContact.setProfilePic(fileDownloadUri);
+								
+								userContactRepo.save(userContact);
+							}
+							
+							return userprofileRepo.save(userprofile.get(0));
+							
+						}else {
+							
+							return null;
+						}
+						
+					}else {
+					
+					return null;
+					
+					}
+				} catch (IOException ex) {
+				
+					throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+			
+				}
 		}
-	}
+	
 	public UserProfile saveAllProfile(MultipartFile file, int userId,String DisplayName) {
 		// Normalize file name
 
@@ -315,6 +377,15 @@ public class FileStorageService {
 				.getResultList();
 	}
 	
+	@Transactional
+	@SuppressWarnings({ "unchecked", "static-access" })
+	public List<MediaFiles> getAllGreetings() {
+		return entityManager.createNativeQuery("select * from media_files  where File_Type=:GREETING ORDER BY file_id  DESC",MediaFiles.class)
+				.setParameter("GREETING", Constant.GREETING)
+				.getResultList();
+	}
+
+	
 	   @SuppressWarnings("unchecked")  
 	   public List<Integer> getFileId(int userId) { 
 		   return entityManager.
@@ -333,36 +404,42 @@ public class FileStorageService {
 		}
 		
 		public UserProfile storeLiveFeedFile(MultipartFile file,String text , int userId,String fileType) {
-			String fileName = StringUtils.cleanPath(String.valueOf(userId)+System.currentTimeMillis()+getFileExtension(file));
-			   String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-		                .path("/downloadFile/")
-		                .path(String.valueOf(fileName))
-		                .toUriString();
 			
-			try {
-				if (fileName.contains("..")) {
-					throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
-				}
-				List<UserProfile> userprofile = null;
-				userprofile = userprofileRepo.findById(userId);
-				MediaFiles mediaFile = new MediaFiles();
-				mediaFile.setFilePath(fileDownloadUri);
-				mediaFile.setFileType(fileType);
-				mediaFile.setIsLiked(false);
-				mediaFile.setLikes(0l);
-				mediaFile.setRating(0l);
-				mediaFile.setText(text);
-				mediaFile.setIsRated(false);
-				mediaFile.setIsBookMarked(false);
-				mediaFile.setCreateDate(dateUtil.getDate());
-				mediaFile.setLastModifiedDate(dateUtil.getDate());
-				userprofile.get(0).getFiles().add(mediaFile);
-				Path targetLocation = this.fileStorageLocation.resolve(fileName);
-				Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-				
-				return userprofileRepo.save(userprofile.get(0));
-			} catch (IOException ex) {
-				throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+			
+			List<UserProfile> userprofile = null;
+			userprofile = userprofileRepo.findById(userId);
+			
+			if (!userprofile.isEmpty()) {
+				String fileName = StringUtils
+						.cleanPath(String.valueOf(userId) + System.currentTimeMillis() + getFileExtension(file));
+				String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
+						.path(String.valueOf(fileName)).toUriString();
+				try {
+					if (fileName.contains("..")) {
+						throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
+					}
+					MediaFiles mediaFile = new MediaFiles();
+					mediaFile.setFilePath(fileDownloadUri);
+					mediaFile.setFileType(fileType);
+					mediaFile.setIsLiked(false);
+					mediaFile.setLikes(0l);
+					mediaFile.setRating(0l);
+					mediaFile.setText(text);
+					mediaFile.setIsRated(false);
+					mediaFile.setIsBookMarked(false);
+					mediaFile.setCreateDate(dateUtil.getDate());
+					mediaFile.setLastModifiedDate(dateUtil.getDate());
+					userprofile.get(0).getFiles().add(mediaFile);
+					Path targetLocation = this.fileStorageLocation.resolve(fileName);
+					Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+
+					return userprofileRepo.save(userprofile.get(0));
+				} catch (IOException ex) {
+					throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+				} 
+			}
+			else {
+				return null;
 			}
 		}
 }

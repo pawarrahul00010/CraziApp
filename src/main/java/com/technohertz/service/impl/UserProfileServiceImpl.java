@@ -16,13 +16,6 @@ public class UserProfileServiceImpl implements IUserProfileService{
 
 
 	@Override
-	public List<UserRegister> findByUserName(String userName) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-
-	@Override
 	public List<UserProfile> getProfileList() {
 
 		return userprofilerepo.findAll();
