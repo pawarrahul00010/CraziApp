@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import com.technohertz.common.Constant;
 import com.technohertz.exception.ResourceNotFoundException;
@@ -76,18 +75,45 @@ public class GroupProfileController {
 	private FileStorageService fileStorageService;
 
 	@PostMapping("/create")
-	public ResponseEntity<ResponseObject> createGroup(@RequestParam("contactList") String contacts,
-			@RequestParam("file") MultipartFile file, @RequestParam("groupName") String groupName,
-			@RequestParam("userId") Integer userId) {
+	public ResponseEntity<ResponseObject> createGroup(@RequestParam(value ="contactList", required=false) String contacts,
+			@RequestParam(value ="file", required=false) MultipartFile file, 
+			@RequestParam(value ="groupName", required=false) String groupName,
+			@RequestParam(value ="userId", required=false) Integer userId) {
 
-		if (contacts.equals("") || contacts == null || String.valueOf(userId).equals("")
-				|| String.valueOf(userId) == null || String.valueOf(file).equals("") || String.valueOf(file) == null
-				|| String.valueOf(groupName).equals("") || String.valueOf(groupName) == null) {
-
+		if(contacts == null ) {
+			
 			response.setError("1");
-			response.setMessage("wrong userId, file, contactList and groupName please enter correct value");
+			response.setMessage("'contactList' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (file == null) {
+
+			response.setError("1");
+			response.setMessage("'file' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else if (groupName == null) {
+			response.setError("1");
+			response.setMessage("'groupName' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else if (userId == null) {
+
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 
 		} else {
@@ -139,19 +165,29 @@ public class GroupProfileController {
 	}
 
 	@PostMapping("/update/contact")
-	public ResponseEntity<ResponseObject> updateGroup(@RequestParam("contactList") String contacts,
-			@RequestParam("groupId") Integer groupId) {
+	public ResponseEntity<ResponseObject> updateGroup(@RequestParam(value ="contactList", required=false) String contacts,
+			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
-		if (contacts.equals("") || contacts == null || String.valueOf(groupId).equals("")
-				|| String.valueOf(groupId) == null) {
-
+		if(contacts == null ) {
+			
 			response.setError("1");
-			response.setMessage("wrong contactList and groupId please enter correct value");
+			response.setMessage("'contactList' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (groupId == null) {
+
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 
-		} else {
+		}else {
 
 			List<UserContact> retrivedContactList = userContactService.getAll();// get all user from database
 
@@ -210,18 +246,30 @@ public class GroupProfileController {
 	}
 
 	@PostMapping("/delete/contact")
-	public ResponseEntity<ResponseObject> deleteContactFromGroup(@RequestParam("contactidList") String contacts,
-			@RequestParam("groupId") String groupId) {
+	public ResponseEntity<ResponseObject> deleteContactFromGroup(@RequestParam(value ="contactidList", required=false) String contacts,
+			@RequestParam(value ="groupId", required=false) String groupId) {
 
-		if (contacts.equals("") || contacts == null || groupId.equals("") || groupId == null) {
-
+		if(contacts == null ) {
+			
 			response.setError("1");
-			response.setMessage("wrong contactList and groupId please enter correct value");
+			response.setMessage("'contactidList' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (groupId == null) {
+
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 
-		} else {
+		}else {
+
 			int groupid;
 			try {
 				groupid = Integer.parseInt(groupId);
@@ -249,7 +297,7 @@ public class GroupProfileController {
 			groupResponse.setFiles(groupProfile.getFiles());
 
 			response.setStatus("Success");
-			response.setMessage("Group Created successfully");
+			response.setMessage("contact removed from Group successfully");
 			response.setError("0");
 			response.setData(groupResponse);
 
@@ -261,18 +309,30 @@ public class GroupProfileController {
 
 	@SuppressWarnings("unused")
 	@PostMapping("/displayName/{groupId}")
-	public ResponseEntity<ResponseObject> updateDisplayName(@RequestParam("displayName") String displayName,
-			@PathVariable(value = "groupId") String profileid) throws ResourceNotFoundException {
+	public ResponseEntity<ResponseObject> updateDisplayName(@RequestParam(value ="displayName", required=false) String displayName,
+			@PathVariable(value = "groupId", required=false) String profileid) throws ResourceNotFoundException {
 
-		if (displayName.equals("") && displayName == null && profileid.equals("") && profileid == null) {
-
+		if(displayName == null ) {
+			
 			response.setError("1");
-			response.setMessage(" please enter correct value");
+			response.setMessage("'displayName' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (profileid == null) {
+
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 
-		} else {
+		}else {
+
 
 			int id = 0;
 			try {
@@ -327,36 +387,50 @@ public class GroupProfileController {
 	}
 
 	@PostMapping("/like")
-	public ResponseEntity<ResponseObject> totalLikes(@RequestParam("fileid") int fileid,
-			@RequestParam("isLiked") boolean isLiked, @RequestParam(value = "userId") int userId) {
+	public ResponseEntity<ResponseObject> totalLikes(@RequestParam(value ="fileid", required=false) Integer fileid,
+			@RequestParam(value ="isLiked", required=false) Boolean isLiked, 
+			@RequestParam(value = "userId", required=false) Integer userId) {
 
-		MediaFiles mediaFiles = mediaFileRepo.getById(fileid);
-		UserRegister userRegister = registerRepository.getOne(userId);
-		List<LikedUsers> likedUsersList = mediaFileService.getUserLikesByFileId(fileid, userId);
+		
+		if(fileid == null ) {
+			
+			response.setError("1");
+			response.setMessage("'fileid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (isLiked == null) {
 
-		long count = 0;
-
-		if (likedUsersList.isEmpty()) {
-			count = mediaFiles.getLikes();
-			LikedUsers likedUsers = new LikedUsers();
-			likedUsers.setUserName(userRegister.getUserName());
-			likedUsers.setMarkType(Constant.LIKE);
-			likedUsers.setUserId(userId);
-			mediaFiles.setLikes(count + 1);
-			mediaFiles.setIsLiked(true);
-			mediaFiles.getLikedUsers().add(likedUsers);
-			mediaFileRepo.save(mediaFiles);
-
-			response.setError("0");
-			response.setMessage("user liked successfully");
-			response.setData(mediaFiles);
-			response.setStatus("SUCCESS");
+			response.setError("1");
+			response.setMessage("'isLiked' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 
-		} else {
-			count = mediaFiles.getLikes();
-			LikedUsers likedUsers = likedUsersList.get(0);
-			if (likedUsers.getMarkType().equals(Constant.UNLIKED) || likedUsers.getMarkType() == (Constant.UNLIKED)) {
+		}else if (userId == null) {
+
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else {
+			
+			MediaFiles mediaFiles = mediaFileRepo.getById(fileid);
+			UserRegister userRegister = registerRepository.getOne(userId);
+			List<LikedUsers> likedUsersList = mediaFileService.getUserLikesByFileId(fileid, userId);
+	
+			long count = 0;
+	
+			if (likedUsersList.isEmpty()) {
+				count = mediaFiles.getLikes();
+				LikedUsers likedUsers = new LikedUsers();
 				likedUsers.setUserName(userRegister.getUserName());
 				likedUsers.setMarkType(Constant.LIKE);
 				likedUsers.setUserId(userId);
@@ -364,147 +438,198 @@ public class GroupProfileController {
 				mediaFiles.setIsLiked(true);
 				mediaFiles.getLikedUsers().add(likedUsers);
 				mediaFileRepo.save(mediaFiles);
-
+	
 				response.setError("0");
 				response.setMessage("user liked successfully");
 				response.setData(mediaFiles);
 				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
-
+	
 			} else {
-				likedUsers.setUserName(userRegister.getUserName());
-				likedUsers.setMarkType(Constant.UNLIKED);
-				likedUsers.setUserId(userId);
-				mediaFiles.setLikes(count - 1);
-				mediaFiles.setIsLiked(true);
-				mediaFiles.getLikedUsers().add(likedUsers);
+	
+				count=mediaFiles.getLikes();
+				
+				LikedUsers likedUsers = likedUsersList.get(0);
+			
+				fileStorageService.deleteLike(likedUsers);
+				
+				mediaFiles.setLikes(count-1);
+				
+				if(count<=0) {
+					
+					mediaFiles.setIsLiked(false);
+					
+					}
+				
 				mediaFileRepo.save(mediaFiles);
-
+				
 				response.setError("0");
 				response.setMessage("user unliked successfully");
 				response.setData(mediaFiles);
 				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
+	
+				
 			}
+	
 		}
-
 	}
-
 	@SuppressWarnings("unused")
 	@PostMapping("/rating")
-	public ResponseEntity<ResponseObject> totalRating(@RequestParam("fileid") String userfileid,
-			@RequestParam("isRated") String isRated, @RequestParam("rateCount") String rateCounts,
-			@RequestParam(value = "userId") int userId) {
+	public ResponseEntity<ResponseObject> totalRating(@RequestParam(value ="fileid", required=false) String userfileid,
+			@RequestParam(value ="isRated", required=false) String isRated, 
+			@RequestParam(value ="rateCount", required=false) String rateCounts,
+			@RequestParam(value = "userId", required=false) Integer userId) {
 
-		int cRate = Integer.parseInt(rateCounts);
-		if (userfileid.equals("") && userfileid == null && isRated.equals("") && isRated == null
-				&& rateCounts.equals("") && rateCounts == null) {
-
+		
+		if(userfileid == null ) {
+			
 			response.setError("1");
-			response.setMessage("wrong fileid, rateCount and isRated please enter correct value");
+			response.setMessage("'fileid' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (isRated == null) {
+
+			response.setError("1");
+			response.setMessage("'isRated' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 
-		} else {
+		}else if (rateCounts == null) {
 
-			int fileid = 0;
-			int rateCount = 0;
-			boolean isRate = false;
-			try {
-				isRate = Boolean.parseBoolean(isRated);
-				fileid = Integer.parseInt(userfileid);
-				rateCount = Integer.parseInt(rateCounts);
-			} catch (Exception e) {
+			response.setError("1");
+			response.setMessage("'rateCount' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
 
-				response.setError("1");
-				response.setMessage("wrong fileid and rateCount please enter numeric value");
-				response.setData(empty);
-				response.setStatus("FAIL");
-				return ResponseEntity.ok(response);
+		}else if (userId == null) {
 
-			}
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
 
-			UserRegister userRegister = registerRepository.getOne(userId);
-			List<LikedUsers> likedUsersList = mediaFileService.getUserRatingByFileId(fileid, userId);
-
-			MediaFiles mediaFiles = mediaFileRepo.getById(fileid);
-
-			long rate = 0;
-			System.out.println(mediaFiles.getLikes());
-
-			if (mediaFiles.getRating() == null || mediaFiles.getRating() == 0) {
-
-				rate = 0;
-
-			} else {
-
-				rate = mediaFiles.getRating();
-			}
-
-			if (likedUsersList.isEmpty()) {
-
-				LikedUsers likedUsers = new LikedUsers();
-				likedUsers.setUserName(userRegister.getUserName());
-				likedUsers.setMarkType(Constant.RATE);
-				likedUsers.setUserId(userId);
-				likedUsers.setRating(rateCount);
-				likedUsers.setTypeId(0);
-
-				rate = rate + rateCount;
-				mediaFiles.setRating(rate);
-				mediaFiles.setIsRated(true);
-				mediaFiles.getLikedUsers().add(likedUsers);
-				mediaFileRepo.save(mediaFiles);
-
-				response.setError("0");
-				response.setMessage("user rated with : " + cRate);
-				response.setData(mediaFiles);
-				response.setStatus("SUCCESS");
-				return ResponseEntity.ok(response);
-
-			} else {
-
-				LikedUsers likedUsers = likedUsersList.get(0);
-
-				if (rate >= 0) {
-					rate = rate - likedUsers.getRating();
-					rate = rate + rateCount;
+		}else {
+			
+			int cRate = Integer.parseInt(rateCounts);
+			
+				int fileid = 0;
+				int rateCount = 0;
+				boolean isRate = false;
+				try {
+					isRate = Boolean.parseBoolean(isRated);
+					fileid = Integer.parseInt(userfileid);
+					rateCount = Integer.parseInt(rateCounts);
+				} catch (Exception e) {
+	
+					response.setError("1");
+					response.setMessage("wrong fileid and rateCount please enter numeric value");
+					response.setData(empty);
+					response.setStatus("FAIL");
+					return ResponseEntity.ok(response);
+	
+				}
+	
+				UserRegister userRegister = registerRepository.getOne(userId);
+				List<LikedUsers> likedUsersList = mediaFileService.getUserRatingByFileId(fileid, userId);
+	
+				MediaFiles mediaFiles = mediaFileRepo.getById(fileid);
+	
+				long rate = 0;
+				System.out.println(mediaFiles.getLikes());
+	
+				if (mediaFiles.getRating() == null || mediaFiles.getRating() == 0) {
+	
+					rate = 0;
+	
+				} else {
+	
+					rate = mediaFiles.getRating();
+				}
+	
+				if (likedUsersList.isEmpty()) {
+	
+					LikedUsers likedUsers = new LikedUsers();
 					likedUsers.setUserName(userRegister.getUserName());
 					likedUsers.setMarkType(Constant.RATE);
 					likedUsers.setUserId(userId);
 					likedUsers.setRating(rateCount);
+					likedUsers.setTypeId(0);
+	
+					rate = rate + rateCount;
+					mediaFiles.setRating(rate);
+					mediaFiles.setIsRated(true);
 					mediaFiles.getLikedUsers().add(likedUsers);
-
+					mediaFileRepo.save(mediaFiles);
+	
+					response.setError("0");
+					response.setMessage("user rated with : " + cRate);
+					response.setData(mediaFiles);
+					response.setStatus("SUCCESS");
+					return ResponseEntity.ok(response);
+	
+				} else {
+	
+					LikedUsers likedUsers = likedUsersList.get(0);
+	
+					if (rate >= 0) {
+						rate = rate - likedUsers.getRating();
+						rate = rate + rateCount;
+						likedUsers.setUserName(userRegister.getUserName());
+						likedUsers.setMarkType(Constant.RATE);
+						likedUsers.setUserId(userId);
+						likedUsers.setRating(rateCount);
+						mediaFiles.getLikedUsers().add(likedUsers);
+	
+					}
+	
+					mediaFiles.setIsRated(true);
+					mediaFiles.setRating(rate);
+					mediaFileRepo.save(mediaFiles);
+	
+					response.setError("0");
+					response.setMessage("rating updated with " + cRate);
+					response.setData(mediaFiles);
+					response.setStatus("SUCCESS");
+					return ResponseEntity.ok(response);
 				}
-
-				mediaFiles.setIsRated(true);
-				mediaFiles.setRating(rate);
-				mediaFileRepo.save(mediaFiles);
-
-				response.setError("0");
-				response.setMessage("rating updated with " + cRate);
-				response.setData(mediaFiles);
-				response.setStatus("SUCCESS");
-				return ResponseEntity.ok(response);
 			}
-		}
 	}
-
 	@SuppressWarnings("unused")
 	@PutMapping("/aboutUs/{id}")
-	public ResponseEntity<ResponseObject> updateStatus(@RequestParam("aboutUs") String aboutUs,
-			@PathVariable(value = "id") String userid) throws ResourceNotFoundException {
+	public ResponseEntity<ResponseObject> updateStatus(@RequestParam(value ="aboutUs", required=false) String aboutUs,
+			@PathVariable(value = "id", required=false) String userid) throws ResourceNotFoundException {
 
-		if (aboutUs.equals("") && aboutUs == null && userid.equals("") && userid == null) {
-
+		if(aboutUs == null ) {
+			
 			response.setError("1");
-			response.setMessage("wrong aboutUs and userid please enter correct value");
+			response.setMessage("'aboutUs' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (userid == null) {
+
+			response.setError("1");
+			response.setMessage("'id' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 
-		} else {
+		}else {
 
 			int id = 0;
 			int rateCount = 0;
@@ -549,41 +674,57 @@ public class GroupProfileController {
 	}
 
 	@PutMapping("/uploadFile/{userId}")
-	public ResponseEntity<ResponseObject> updateProfile(@RequestParam("file") MultipartFile file,
-			@PathVariable(value = "userId") Integer userId) {
-		GroupProfile groupProfile = fileStorageService.savegroupProfile(file, userId);
-		MediaFiles files = mediaFileRepo.getOne(Integer
-				.valueOf(String.valueOf(groupProfile.getFiles().get(groupProfile.getFiles().size() - 1).getFileId())));
-		System.out.println(files);
-
-		/*
-		 * String fileDownloadUri =
-		 * ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
-		 * .path(String.valueOf(files.getFilePath())).toUriString();
-		 */
-
-		Object obj = new UploadFileResponse(groupProfile.getCurrentProfile(), groupProfile.getCurrentProfile(),
-				file.getContentType(), file.getSize());
-
-		if (!file.isEmpty() || userId != null) {
-			response.setMessage("your Profile Image updated successfully");
-
-			response.setData(obj);
-			response.setError("0");
-			response.setStatus("success");
-
-			return ResponseEntity.ok(response);
-		} else {
-			response.setMessage("your Profile Image not updated");
-
-			response.setData(empty);
+	public ResponseEntity<ResponseObject> updateProfile(@RequestParam(value ="file", required=false) MultipartFile file,
+			@PathVariable(value = "userId", required=false) Integer userId) {
+		
+		if(file == null ) {
+			
 			response.setError("1");
-			response.setStatus("fail");
-
+			response.setMessage("'file' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
+		
+		}
+		else if (userId == null) {
+
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else {
+		
+			GroupProfile groupProfile = fileStorageService.savegroupProfile(file, userId);
+			MediaFiles files = mediaFileRepo.getOne(Integer
+					.valueOf(String.valueOf(groupProfile.getFiles().get(groupProfile.getFiles().size() - 1).getFileId())));
+			System.out.println(files);
+
+			Object obj = new UploadFileResponse(groupProfile.getCurrentProfile(), groupProfile.getCurrentProfile(),
+					file.getContentType(), file.getSize());
+	
+			if (!file.isEmpty()) {
+				response.setMessage("your Profile Image updated successfully");
+	
+				response.setData(obj);
+				response.setError("0");
+				response.setStatus("success");
+	
+				return ResponseEntity.ok(response);
+			} else {
+				response.setMessage("your Profile Image not updated");
+	
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("fail");
+	
+				return ResponseEntity.ok(response);
+			}
 		}
 	}
-
 	private List<String> getContactList(String userContactList) {
 
 		List<String> contactList = new ArrayList<String>();

@@ -46,19 +46,29 @@ public class ContactRestController {
 	 * @return
 	 */
 	@RequestMapping(value = "/contact", method = RequestMethod.POST)
-	public ResponseEntity<ResponseObject> saveContact( @RequestParam("contactList") String userContactList,
-			@RequestParam("userId") String userid, ModelMap map){
+	public ResponseEntity<ResponseObject> saveContact( @RequestParam(value ="contactList", required=false) String userContactList,
+			@RequestParam(value ="userId", required=false) String userid){
 		
-		if(userid.equals("") || userid == null || userContactList.equals("") || userContactList == null) {
+		if(userContactList == null ) {
 			
 			response.setError("1");
-			response.setMessage("wrong userId and contactList please enter correct value");
+			response.setMessage("'contactList' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 		
 		}
-		else {
+		else if (userid == null) {
+
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else {
 		
 				List<String> contactlist = getContactList(userContactList);//convert from string to array
 				

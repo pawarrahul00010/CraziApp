@@ -35,14 +35,15 @@ public class OtpRestController {
 	
 
 		@RequestMapping(value = {"/forget/otp","/otp/resend"}, method = RequestMethod.POST)
-		public ResponseEntity<ResponseObject> saveForgetOTP(@RequestParam("mobilNumber") String mobilNumber){
+		public ResponseEntity<ResponseObject> saveForgetOTP(@RequestParam(value ="mobilNumber", required=false) String mobilNumber){
 			
-			if(mobilNumber.equals("") || mobilNumber == null ) {
+			if(mobilNumber == null ) {
 				
 				response.setError("1");
-				response.setMessage("wrong userRegister data please enter correct value");
+				response.setMessage("'mobilNumber' is empty or null please check");
 				response.setData(empty);
 				response.setStatus("FAIL");
+				
 				return ResponseEntity.ok(response);
 			
 			}
@@ -97,12 +98,23 @@ public class OtpRestController {
 		}
 		
 	@RequestMapping(value = "/otp/verify", method = RequestMethod.POST)
-	public ResponseEntity<ResponseObject> verifyOTP(@RequestParam("userId") String userid,@RequestParam("otp") String OTP){
+	public ResponseEntity<ResponseObject> verifyOTP(@RequestParam(value ="userId", required=false) String userid,
+			@RequestParam(value ="otp", required=false) String OTP){
 		
-		if(userid.equals("") || userid == null || OTP.equals("") || OTP == null ) {
+		if(userid == null ) {
 			
 			response.setError("1");
-			response.setMessage("wrong userId and otp please enter correct value");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if(OTP == null ) {
+			
+			response.setError("1");
+			response.setMessage("'otp' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			return ResponseEntity.ok(response);
@@ -137,7 +149,7 @@ public class OtpRestController {
 							if(retrievedUserRegister.get(0).getUserOtp().getOtp() == otp) {
 								
 								UserOtp saveUserOTP = new UserOtp();
-								saveUserOTP.setOtp(otp);
+								saveUserOTP.setOtp(0);
 								saveUserOTP.setOtpId(retrievedUserRegister.get(0).getUserOtp().getOtpId());
 								saveUserOTP.setCreateDate(retrievedUserRegister.get(0).getUserOtp().getCreateDate());
 								saveUserOTP.setLastModifiedDate(getDate());

@@ -33,9 +33,9 @@ import com.technohertz.model.UserRegister;
 import com.technohertz.payload.UploadFileResponse;
 import com.technohertz.repo.MediaFileRepo;
 import com.technohertz.repo.UserRegisterRepository;
+import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.ResponseObject;
-import com.technohertz.util.Thumbnail;
 
 @RestController
 @RequestMapping("/livefeed")
@@ -46,14 +46,17 @@ public class LiveFeedController {
 	private Empty empty;
 	
 	@Autowired
-	private Thumbnail videoUtil;
+	private MediaFileRepo mediaFileRepo;
 	
 	@Autowired
-	private MediaFileRepo mediaFileRepo;
+	private IMediaFileService mediaFileService;
+
     @Autowired
     private FileStorageService fileStorageService;
+    
 	@Autowired
 	private UserRegisterRepository registerRepository;
+	
     @Autowired
 	private ResponseObject response;
     
@@ -61,15 +64,42 @@ public class LiveFeedController {
 	private Constant constant;
 
     @SuppressWarnings({ "static-access", "unused" })
-	@RequestMapping(value ="/video" ,method=RequestMethod.POST, 
+	@RequestMapping(value ="/video" ,method=RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
+    public  ResponseEntity<ResponseObject> uploadVideos(@RequestParam(value="file", required=false) MultipartFile file,
+    		@RequestParam(value = "userId", required=false) Integer  userId,
+    		@RequestParam(value = "saySomething", required=false) String  saySomething) {
+    	
+    	if(file == null) {
 			
-			  produces = MediaType.APPLICATION_JSON_VALUE)
-    public  ResponseEntity<ResponseObject> uploadVideos(@RequestParam("file") MultipartFile file,
-    		@RequestParam(value = "userId") Integer  userId,@RequestParam(value = "saySomething") String  saySomething) {
+			response.setError("1");
+			response.setMessage("'file' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(saySomething == null) {
+			
+			response.setError("1");
+			response.setMessage("'saySomething' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(userId == null) {
+			
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
 
     	UserProfile fileName = fileStorageService.storeLiveFeedFile(file,saySomething, userId,constant.LIVEFEED);
 
-     
         Object obj=new UploadFileResponse(fileName.getFiles().get(fileName.getFiles().size()-1).getFilePath(),fileName.getFiles().get(fileName.getFiles().size()-1).getFilePath(),
                 file.getContentType(), file.getSize());
         
@@ -90,12 +120,65 @@ public class LiveFeedController {
 
 			return ResponseEntity.ok(response);
 		}
+	  }
     }
-    @GetMapping("/listViewrs")
-	public  ResponseEntity<ResponseObject> getAllViewers(@RequestParam(value = "fileid") int  fileid) {
-		List<LikedUsers> file= fileStorageService.getAll(fileid);
+    
+    
+    @PostMapping("/listLike")
+	public  ResponseEntity<ResponseObject> getAllLikers(@RequestParam(value = "fileid") Integer  fileid) {
+		
+    	if(fileid == null) {
+			
+			response.setError("1");
+			response.setMessage("'fileid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+		else {
+    	
+    	List<LikedUsers> file= fileStorageService.getAll(fileid, Constant.LIKE);
 		
 		  if (!file.isEmpty()) {
+				response.setMessage("your likers retrived successfully");
+				response.setData(file);
+				response.setError("0");
+				response.setStatus("SUCCESS");
+
+				return ResponseEntity.ok(response);
+			}
+		  else {
+				response.setMessage("No one liked yet");
+
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("FAIL");
+
+				return ResponseEntity.ok(response);
+			}
+		}
+	}
+
+    @PostMapping("/listViews")
+	public  ResponseEntity<ResponseObject> getAllViewers(@RequestParam(value = "fileid", required=false) Integer  fileid) {
+
+    	if(fileid == null) {
+			
+			response.setError("1");
+			response.setMessage("'fileid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+		else {
+    	List<LikedUsers> file= fileStorageService.getAll(fileid, Constant.VIEW);
+		
+		  if (!file.isEmpty()) {
+			  
 				response.setMessage("your viewers retrived successfully");
 				response.setData(file);
 				response.setError("0");
@@ -104,7 +187,7 @@ public class LiveFeedController {
 				return ResponseEntity.ok(response);
 			}
 		  else {
-				response.setMessage("No one view yet");
+				response.setMessage("No one viewed yet");
 
 				response.setData(empty);
 				response.setError("1");
@@ -112,10 +195,25 @@ public class LiveFeedController {
 
 				return ResponseEntity.ok(response);
 			}
+		}
 	}
-	
+
+    
 	@PostMapping("/getAllVideos")
-	public ResponseEntity<ResponseObject> getAllVideoById(@RequestParam(value = "userId") Integer  userId) {
+	public ResponseEntity<ResponseObject> getAllVideoById(@RequestParam(value = "userId", required=false) Integer  userId) {
+		
+		if(userId == null) {
+			
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+		else {
+			
 		List<MediaFiles> fileList= fileStorageService.getAllVideoById(userId);
 		List<GetVideos> image=new ArrayList<GetVideos>();
 
@@ -143,7 +241,9 @@ public class LiveFeedController {
 
 				return ResponseEntity.ok(response);
 			}
+		}
 	}
+	
 	/* @GetMapping("/downloadFile/{fileName:.+}") */
     @GetMapping("/downloadFile/{fileName:.+}")
     public ResponseEntity<Resource> downloadFile(@PathVariable String fileName , HttpServletRequest request) {
@@ -170,29 +270,57 @@ public class LiveFeedController {
     }
 
 	@PostMapping("/likes")
-	public ResponseEntity<ResponseObject> totalLikes(@RequestParam("fileid") int fileid,@RequestParam("isLiked") boolean isLiked,
-			@RequestParam(value = "userId") int  userId) {
-		MediaFiles mediaFiles= mediaFileRepo.getById(fileid);
+	public ResponseEntity<ResponseObject> totalLikes(@RequestParam(value="fileid", required=false) Integer fileid,
+			@RequestParam(value="isLiked", required=false) Boolean isLiked,
+			@RequestParam(value = "userId", required=false) Integer  userId) {
 		
-
-		UserRegister userRegister =registerRepository.getOne(userId);
-	    LikedUsers likedUsers=new LikedUsers();
-		likedUsers.setUserName(userRegister.getUserName());
-		likedUsers.setMarkType(Constant.LIKE);
-		mediaFiles.getLikedUsers().add(likedUsers); 
+		if(isLiked == null) {
+			
+			response.setError("1");
+			response.setMessage("'isLiked' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(fileid == null) {
+			
+			response.setError("1");
+			response.setMessage("'fileid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(userId == null) {
+			
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+		
+		MediaFiles mediaFiles = mediaFileRepo.getById(fileid);
+		UserRegister userRegister = registerRepository.getOne(userId);
+		List<LikedUsers> likedUsersList = mediaFileService.getUserLikesByFileId(fileid, userId);
+		
 		long count=0;
 
-		if(mediaFiles.getLikes() == null) {
-			count=0;
-		} else{
+		if(likedUsersList.isEmpty()) {
+			
 			count=mediaFiles.getLikes();
-		}
-		if(isLiked==true && mediaFiles.getIsLiked()==false ) {
-		count = count+1;
-			mediaFiles.setLikes(count);
-			mediaFiles.setIsLiked(isLiked);
+			LikedUsers likedUsers = new LikedUsers();
+			likedUsers.setUserName(userRegister.getUserName());
+			likedUsers.setMarkType(Constant.LIKE);
+			likedUsers.setUserId(userId);
+			mediaFiles.setLikes(count+1);
+			mediaFiles.setIsLiked(true);
+			mediaFiles.getLikedUsers().add(likedUsers); 
 			mediaFileRepo.save(mediaFiles);
-
+			
 			response.setError("0");
 			response.setMessage("user liked successfully");
 			response.setData(mediaFiles);
@@ -201,47 +329,173 @@ public class LiveFeedController {
 
 		}
 		else {
-	
-		long totalcount=	mediaFiles.getLikes();
-		count = totalcount-1;
-			mediaFiles.setLikes(count);
-			if(count>=0) {
-			mediaFiles.setIsLiked(false);
-			likedUsers.setMarkType("UNLIKED");
-			mediaFileRepo.save(mediaFiles);
+			
+				count=mediaFiles.getLikes();
+				LikedUsers likedUsers = likedUsersList.get(0);
+			
+				fileStorageService.deleteLike(likedUsers);
+				
+				mediaFiles.setLikes(count-1);
+				if(count<=0) {
+					mediaFiles.setIsLiked(false);
+					}
+				mediaFileRepo.save(mediaFiles);
+				
+				response.setError("0");
+				response.setMessage("user unliked successfully");
+				response.setData(mediaFiles);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
 			}
+		}
+	}
+
+	
+	@PostMapping("/view")
+	public ResponseEntity<ResponseObject> videoViewed(@RequestParam("fileid") String fileid,
+			@RequestParam(value = "userId") String  userId) {
+		
+		if(fileid == null) {
 			response.setError("1");
-			response.setMessage("user unliked successfully");
+			response.setMessage("'fileid' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
+			
 		}
+		else if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+
+				int fileId = 0;
+				int userid = 0;
+				try {
+					fileId = Integer.parseInt(fileid);
+					userid = Integer.parseInt(userId);
+				} catch (Exception e) {
+
+					response.setError("1");
+					response.setMessage("wrong fileid and userId please enter numeric value");
+					response.setData(empty);
+					response.setStatus("FAIL");
+					return ResponseEntity.ok(response);
+
+				}
+				UserRegister userRegister = registerRepository.getOne(userid);
+				
+				List<LikedUsers> likedUsersList= mediaFileService.getUserViewExistOrNotByFileId(fileId, userid);
+
+				MediaFiles mediaFiles= mediaFileRepo.getById(fileId);
+				
+				long totalViews=0;
+				
+				if(mediaFiles.getViewer() == null || mediaFiles.getViewer() == 0) {
+
+					totalViews=0;
+
+				} else{
+
+					totalViews=mediaFiles.getViewer();
+				}
+
+				if(likedUsersList.isEmpty()) {
+					
+					LikedUsers likedUsers=new LikedUsers();
+					likedUsers.setUserName(userRegister.getUserName());
+					likedUsers.setMarkType(Constant.VIEW);
+					likedUsers.setUserId(userid);
+					likedUsers.setTypeId(0);
+					
+					totalViews = totalViews+1;
+					mediaFiles.setViewer(totalViews);
+					mediaFiles.getLikedUsers().add(likedUsers); 
+					mediaFileRepo.save(mediaFiles);
+
+					response.setError("0");
+					response.setMessage("user viewed video");
+					response.setData(mediaFiles);
+					response.setStatus("SUCCESS");
+					return ResponseEntity.ok(response);
+
+				}
+				else {
+					
+					LikedUsers likedUsers=likedUsersList.get(0);
+					
+					mediaFiles.getLikedUsers().add(likedUsers); 
+								
+					mediaFiles.setViewer(totalViews);
+					mediaFileRepo.save(mediaFiles);
+
+					response.setError("0");
+					response.setMessage("User already video viewed ");
+					response.setData(mediaFiles);
+					response.setStatus("SUCCESS");
+					return ResponseEntity.ok(response);
+				}
+			}
 		}
 
-	@SuppressWarnings("unused")
+	
+	
 	@PostMapping("/rating")
-	public ResponseEntity<ResponseObject> totalRating(@RequestParam("fileid") String userfileid,
-			@RequestParam("isRated") String isRated,@RequestParam("rateCount") String rateCounts,
-			@RequestParam(value = "userId") int  userId) {
-
-		if(userfileid.equals("") && userfileid == null && isRated.equals("") && isRated == null && rateCounts.equals("") && rateCounts == null) {
-
+	public ResponseEntity<ResponseObject> totalRating(@RequestParam(value="fileid", required=false) String userfileid,
+			@RequestParam(value="isRated", required=false) String isRated,
+			@RequestParam(value="rateCount", required=false) String rateCounts,
+			@RequestParam(value = "userId", required=false) Integer  userId) {
+		
+		if(isRated == null) {
 			response.setError("1");
-			response.setMessage("wrong fileid, rateCount and isRated please enter correct value");
+			response.setMessage("'isRated' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
-
+			
 		}
-		else {
+		else if(rateCounts == null) {
+			response.setError("1");
+			response.setMessage("'rateCount' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(userfileid == null) {
+			response.setError("1");
+			response.setMessage("'fileid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
 
 			int fileid = 0;
 			int rateCount = 0;
 			boolean isRate = false;
+			
 			try {
+				
 				isRate = Boolean.parseBoolean(isRated);
 				fileid = Integer.parseInt(userfileid);
 				rateCount = Integer.parseInt(rateCounts);
+				
 			} catch (Exception e) {
 
 				response.setError("1");
@@ -262,7 +516,7 @@ public class LiveFeedController {
 
 			//Long totalLikes=mediaFiles.getLikes();
 			long rate=0;
-			System.out.println(mediaFiles.getLikes());
+			
 			if(mediaFiles.getRating() == null) {
 
 				rate=0;
@@ -272,14 +526,12 @@ public class LiveFeedController {
 				rate=mediaFiles.getRating();
 			}
 
-
 			if(isRate==true&&  mediaFiles.getIsRated()==false ) {
-
 			
 				rate = rate+rateCount;
 				mediaFiles.setRating(rate);
 				mediaFiles.setIsRated(isRate);
-				mediaFiles.setFileType("VIDEO");
+				mediaFiles.setFileType(Constant.VIDEO);
 				mediaFileRepo.save(mediaFiles);
 
 				response.setError("0");
@@ -287,7 +539,6 @@ public class LiveFeedController {
 				response.setData(mediaFiles);
 				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
-
 
 			}
 			else {
@@ -297,7 +548,7 @@ public class LiveFeedController {
 					mediaFiles.setLikes(rate);
 					if(rate>=0) {
 					mediaFiles.setIsRated(false);
-					likedUsers.setMarkType("UNRATED");
+					likedUsers.setMarkType(Constant.RATE);
 					mediaFiles.setRating(rate);
 				    mediaFileRepo.save(mediaFiles);
 			}

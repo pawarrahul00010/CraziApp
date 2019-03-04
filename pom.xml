@@ -22,12 +22,12 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 	</properties>
-	<repositories>
+<!-- 	<repositories>
 	  <repository>
 	    <id>xuggle repo</id>
 	    <url>https://files.liferay.com/mirrors/xuggle.googlecode.com/svn/trunk/repo/share/java/</url>
 	  </repository>
-	</repositories>
+	</repositories> -->
 	<dependencies>
 	
 
@@ -88,11 +88,11 @@
 
 
 
-		  <dependency>
+		<!--   <dependency>
 		    <groupId>xuggle</groupId>
 		    <artifactId>xuggle-xuggler</artifactId>
 		    <version>5.4</version>
-		  </dependency>
+		  </dependency> -->
 			<dependency>
 			    <groupId>org.jcodec</groupId>
 			    <artifactId>jcodec</artifactId>

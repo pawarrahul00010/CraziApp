@@ -35,4 +35,6 @@ public class Constant {
 	public static final String AUDIO = "AUDIO";
 	
 	public static final String DOCUMENT = "DOCUMENT";
+	
+	public static final String VIEW = "VIEWED";
 }

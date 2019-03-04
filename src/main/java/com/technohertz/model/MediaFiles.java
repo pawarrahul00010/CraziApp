@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "Media_Files")
 @DynamicUpdate
-public class MediaFiles implements Serializable {
+public class MediaFiles implements Serializable{
 
 	
 	private static final long serialVersionUID = 1L;
@@ -45,6 +45,10 @@ public class MediaFiles implements Serializable {
 	@ColumnDefault("0")
 	@Column(name = "Total_Likes")
 	private Long likes;
+	
+	@ColumnDefault("0")
+	@Column(name = "Total_viewer")
+	private Long viewer;
 	
 	@ColumnDefault("0")
 	@Column(name = "Total_Rating")
@@ -238,17 +242,24 @@ public class MediaFiles implements Serializable {
 	public void setFileType(String fileType) {
 		this.fileType = fileType;
 	}
+	
+	
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+	public Long getViewer() {
+		return viewer;
+	}
+
+	public void setViewer(Long viewer) {
+		this.viewer = viewer;
+	}
+
 	@Override
 	public String toString() {
 		return "MediaFiles [fileId=" + fileId + ", filePath=" + filePath + ", createDate=" + createDate
-				+ ", lastModifiedDate=" + lastModifiedDate + ", likes=" + likes + ", rating=" + rating + ", fileType="
-				+ fileType + ", isBookMarked=" + isBookMarked + ", isShared=" + isShared + ", isLiked=" + isLiked
-				+ ", isRated=" + isRated + ", profile=" + profile + ", likedUsers=" + likedUsers + "]";
+				+ ", lastModifiedDate=" + lastModifiedDate + ", likes=" + likes + ", viewer=" + viewer + ", rating="
+				+ rating + ", fileType=" + fileType + ", Text=" + Text + ", isBookMarked=" + isBookMarked
+				+ ", isShared=" + isShared + ", isLiked=" + isLiked + ", isRated=" + isRated + ", profile=" + profile
+				+ ", likedUsers=" + likedUsers + "]";
 	}
 
-	
 }

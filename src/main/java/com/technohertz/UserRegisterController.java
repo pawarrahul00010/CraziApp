@@ -58,58 +58,79 @@ public class UserRegisterController {
 	}
 
 	@GetMapping("/myprofile/{userId}")
-	public ResponseEntity<ResponseObject> getUser(@PathVariable(value = "userId") String userid) {
+	public ResponseEntity<ResponseObject> getUser(@PathVariable(value = "userId", required=false) String userid) {
 		
-		
-		int userId = 0;
-		List<UserRegister> register = new ArrayList<UserRegister>();
-		try {
-			
-			userId = Integer.parseInt(userid);
-			register = userRegisterService.getById(userId);
-			
-		} catch (NumberFormatException e) {
+		if(userid == null) {
 			
 			response.setError("1");
-			response.setMessage("wrong userId please enter numeric value");
+			response.setMessage("'userId' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
 			
-		}
-		
-		if(!register.isEmpty()) {
-		response.setMessage("your data is retrived successfully");
-		response.setData(register);
-		response.setError("0");
-		response.setStatus("success");
-		return ResponseEntity.ok(response);	
-		}
-		else {
-			response.setMessage("no data found");
-			response.setData(empty);
+		}else {
+			
+			int userId = 0;
+			List<UserRegister> register = new ArrayList<UserRegister>();
+			try {
+				
+				userId = Integer.parseInt(userid);
+				register = userRegisterService.getById(userId);
+				
+			} catch (NumberFormatException e) {
+				
+				response.setError("1");
+				response.setMessage("wrong userId please enter numeric value");
+				response.setData(empty);
+				response.setStatus("FAIL");
+				return ResponseEntity.ok(response);
+				
+			}
+			
+			if(!register.isEmpty()) {
+			response.setMessage("your data is retrived successfully");
+			response.setData(register);
 			response.setError("0");
-			response.setStatus("FAIL");
-			return ResponseEntity.ok(response);		
+			response.setStatus("success");
+			return ResponseEntity.ok(response);	
+			}
+			else {
+				response.setMessage("no data found");
+				response.setData(empty);
+				response.setError("0");
+				response.setStatus("FAIL");
+				return ResponseEntity.ok(response);		
+			}
+			
 		}
-		
 	}
 
 	@SuppressWarnings("unused")
 	@PostMapping("/login")
-	public ResponseEntity<ResponseObject> loginCredential(@RequestParam("user") String user,@RequestParam("pass") String pass)
+	public ResponseEntity<ResponseObject> loginCredential(@RequestParam(value ="user", required=false) String user,
+			@RequestParam(value ="pass", required=false) String pass)
 			throws ResourceNotFoundException {
 		
-			if(user.equals("") && user == null && pass.equals("") && pass == null) {
-				
-				response.setError("1");
-				response.setMessage("wrong username and password please enter correct value");
-				response.setData(empty);
-				response.setStatus("FAIL");
-				return ResponseEntity.ok(response);
+		if(user == null) {
 			
-			}
-			else {
+			response.setError("1");
+			response.setMessage("'user' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(pass == null) {
+			
+			response.setError("1");
+			response.setMessage("'pass' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
 				UserRegister userRegister=null;
 				List<UserRegister> userRegisterList = userRegisterService.findByUserName(user);
 				
@@ -182,20 +203,37 @@ public class UserRegisterController {
 
 	
 	@PostMapping("/saveall")
-	public ResponseEntity<ResponseObject> addUser(@RequestParam String userName,
-												@RequestParam String password,
-												@RequestParam String mobileNumber) {
+	public ResponseEntity<ResponseObject> addUser(@RequestParam (value ="userName", required=false)String userName,
+			@RequestParam (value ="password", required=false)String password,
+			@RequestParam (value ="mobileNumber", required=false)String mobileNumber) {
 		
-		if(userName.equals("")|| userName == null ||
-				password.equals("") || password == null ||
-				mobileNumber.equals("") || mobileNumber == null) {
+		if(userName == null) {
 			
 			response.setError("1");
-			response.setMessage("wrong userName, password, mobileNumber please enter correct value");
+			response.setMessage("'userName' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
+			
 			return ResponseEntity.ok(response);
-		
+			
+		}else if(password == null) {
+			
+			response.setError("1");
+			response.setMessage("'password' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(mobileNumber == null) {
+			
+			response.setError("1");
+			response.setMessage("'mobileNumber' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
 		}else {
 		
 				UserRegister user = new UserRegister();
@@ -261,55 +299,67 @@ public class UserRegisterController {
 		}
 		
 
-	@Cacheable(value="mobileNumberCache",key="#mobileNumber",unless="#result==null")
-	private boolean userExists(String mobileNumber)
-	{
-		String hql="FROM UserRegister as ur WHERE ur.mobilNumber= ?1";
-		int count=entitymanager.createQuery(hql).setParameter(1, mobileNumber).getResultList().size();
+		@Cacheable(value="mobileNumberCache",key="#mobileNumber",unless="#result==null")
+		private boolean userExists(String mobileNumber)
+		{
+			String hql="FROM UserRegister as ur WHERE ur.mobilNumber= ?1";
+			int count=entitymanager.createQuery(hql).setParameter(1, mobileNumber).getResultList().size();
+			
+			return count>0 ? true : false;
+			
+		}
 		
-		return count>0 ? true : false;
+		@Cacheable(value="userNameCache",key="#userName",unless="#result==null")
+		private boolean userNameExists(String userName)
+		{
+			String hql="FROM UserRegister as ur WHERE ur.userName= ?1";
+			int count=entitymanager.createQuery(hql).setParameter(1, userName).getResultList().size();
+			
+			return count>0 ? true : false;
+			
+		}
 		
-	}
-	@Cacheable(value="userNameCache",key="#userName",unless="#result==null")
-	private boolean userNameExists(String userName)
-	{
-		String hql="FROM UserRegister as ur WHERE ur.userName= ?1";
-		int count=entitymanager.createQuery(hql).setParameter(1, userName).getResultList().size();
-		
-		return count>0 ? true : false;
-		
-	}
-	private LocalDateTime getDate() {
-
-		LocalDateTime now = LocalDateTime.now();
-
-		return now;
-
-	}
-
-	private int getRandomNumber() {
-
-		int rand = new Random().nextInt(10000); 
-		  
-		return rand;
-
-	}
+		private LocalDateTime getDate() {
 	
-	@SuppressWarnings("unused")
+			LocalDateTime now = LocalDateTime.now();
+	
+			return now;
+	
+		}
+
+		private int getRandomNumber() {
+	
+			int rand = new Random().nextInt(10000); 
+			  
+			return rand;
+	
+		}
+	
+	
 	@PostMapping("/ptrn/unlk")
-	public ResponseEntity<ResponseObject> patternCredential(@RequestParam("userId") String userId,@RequestParam("pattern") String pattern)
+	public ResponseEntity<ResponseObject> patternCredential(@RequestParam(value ="userId", required=false) String userId,
+			@RequestParam(value ="pattern", required=false) String pattern)
 			throws ResourceNotFoundException {
 		
-			if(userId.equals("") && userId == null && pattern.equals("") && pattern == null) {
-				
-				response.setError("1");
-				response.setMessage("wrong userId and pattern please enter correct value");
-				response.setData(empty);
-				response.setStatus("FAIL");
-				return ResponseEntity.ok(response);
+		if(userId == null) {
 			
-			}
-			else {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(pattern == null) {
+			
+			response.setError("1");
+			response.setMessage("'pattern' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else  {
 				
 				int userid = 0;
 				try {
@@ -347,21 +397,31 @@ public class UserRegisterController {
 			}
 		}
 
-	@SuppressWarnings("unused")
+	
 	@PostMapping(value = {"/ptrn/save","/ptrn/update"})
-	public ResponseEntity<ResponseObject> patternSave(@RequestParam("userId") String userId,@RequestParam("pattern") String pattern)
+	public ResponseEntity<ResponseObject> patternSave(@RequestParam(value ="userId", required=false) String userId,
+			@RequestParam(value ="pattern", required=false) String pattern)
 			throws ResourceNotFoundException {
 		
-			if(userId.equals("") && userId == null && pattern.equals("") && pattern == null) {
-				
-				response.setError("1");
-				response.setMessage("wrong userId and pattern please enter correct value");
-				response.setData(empty);
-				response.setStatus("FAIL");
-				return ResponseEntity.ok(response);
+		if(userId == null) {
 			
-			}
-			else {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(pattern == null) {
+			
+			response.setError("1");
+			response.setMessage("'pattern' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else  {
 				
 				int userid = 0;
 				try {
@@ -391,21 +451,21 @@ public class UserRegisterController {
 			}
 		}
 
-	@SuppressWarnings("unused")
+	
 	@PostMapping(value = {"/ptrn/remove"})
-	public ResponseEntity<ResponseObject> patternRemove(@RequestParam("userId") String userId)
+	public ResponseEntity<ResponseObject> patternRemove(@RequestParam(value ="userId", required=false) String userId)
 			throws ResourceNotFoundException {
 		
-			if(userId.equals("") && userId == null ) {
-				
-				response.setError("1");
-				response.setMessage("wrong userId please enter correct value");
-				response.setData(empty);
-				response.setStatus("FAIL");
-				return ResponseEntity.ok(response);
+		if(userId == null) {
 			
-			}
-			else {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
 				
 				int userid = 0;
 				try {
@@ -434,6 +494,5 @@ public class UserRegisterController {
 						
 			}
 		}
-
 
 }

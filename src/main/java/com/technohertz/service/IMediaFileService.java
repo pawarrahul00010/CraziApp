@@ -15,5 +15,9 @@ public interface IMediaFileService {
 	List<LikedUsers> getUserBookmarkByFileId(int userfileid, int userId);
 
 	List<MediaFiles> getBookmarksByUserId(int userId);
+
+	List<LikedUsers> getUserViewExistOrNotByFileId(int userfileid, int userId);
+
+	List<MediaFiles> getAllMediaByUserId(int userId);
 	
 }

@@ -108,6 +108,7 @@ public class FileStorageService {
 			mediaFile.setFileType(fileType);
 			mediaFile.setIsLiked(false);
 			mediaFile.setLikes(0l);
+			mediaFile.setViewer(0l);
 			mediaFile.setRating(0l);
 			mediaFile.setIsRated(false);
 			mediaFile.setIsBookMarked(false);
@@ -146,6 +147,7 @@ public class FileStorageService {
 						mediaFile.setFileType(fileType);
 						mediaFile.setIsLiked(false);
 						mediaFile.setLikes(0l);
+						mediaFile.setViewer(0l);
 						mediaFile.setRating(0l);
 						mediaFile.setIsRated(false);
 						mediaFile.setIsBookMarked(false);
@@ -200,6 +202,7 @@ public class FileStorageService {
 							mfile.setFilePath(fileDownloadUri);
 							mfile.setIsLiked(false);
 							mfile.setLikes(0l);
+							mfile.setViewer(0l);
 							mfile.setRating(0l);
 							mfile.setIsRated(false);
 							mfile.setIsBookMarked(false);
@@ -262,6 +265,7 @@ public class FileStorageService {
 			mfile.setIsLiked(false);
 			mfile.setIsRated(false);
 			mfile.setLikes(0l);
+			mfile.setViewer(0l);
 			mfile.setRating(0l);
 			mfile.setIsBookMarked(false);
 			mfile.setCreateDate(dateUtil.getDate());
@@ -279,6 +283,7 @@ public class FileStorageService {
 		}
 	}
 
+	@SuppressWarnings("static-access")
 	public GroupProfile savegroupProfile(MultipartFile file, int userId) {
 		String fileName = StringUtils
 				.cleanPath(String.valueOf(userId) + System.currentTimeMillis() + getFileExtension(file));
@@ -301,6 +306,7 @@ public class FileStorageService {
 			mfile.setLastModifiedDate(dateUtil.getDate());
 			mfile.setIsLiked(false);
 			mfile.setLikes(0l);
+			mfile.setViewer(0l);
 			mfile.setFileType(Constant.GROUPPROFILE);
 			mfile.setRating(0l);
 			mfile.setIsRated(false);
@@ -361,10 +367,10 @@ public class FileStorageService {
 	}
 	@SuppressWarnings("unchecked")
 	@Cacheable(value="viewerCache",key="#fileid",unless="#result==null")
-	public List<LikedUsers> getAll(int fileid) {
+	public List<LikedUsers> getAll(int fileid, String type) {
 	return entityManager.createNativeQuery("select l.user_name from liked_users l where l.file_id=:fileid and type=:type")
 						.setParameter("fileid", fileid)
-						.setParameter("type", Constant.LIKE)
+						.setParameter("type", type)
 						.getResultList();
 	
 	}
@@ -423,6 +429,7 @@ public class FileStorageService {
 					mediaFile.setFileType(fileType);
 					mediaFile.setIsLiked(false);
 					mediaFile.setLikes(0l);
+					mediaFile.setViewer(0l);
 					mediaFile.setRating(0l);
 					mediaFile.setText(text);
 					mediaFile.setIsRated(false);
@@ -441,5 +448,13 @@ public class FileStorageService {
 			else {
 				return null;
 			}
+		}
+		
+		@Transactional
+		public void deleteLike(LikedUsers likedUsers) {
+			   
+			entityManager.createQuery("delete from LikedUsers l where l.typeId=:typeId ")  
+				.setParameter("typeId", likedUsers.getTypeId())
+				.executeUpdate(); 
 		}
 }
