@@ -52,13 +52,36 @@ public class MediaFiles implements Serializable{
 	
 	@ColumnDefault("0")
 	@Column(name = "Total_Rating")
-	private Long rating;
+	private Float rating;
 	
 	@Column(name = "File_Type")
 	private String fileType;
 	
 	@Column(name = "Text")
 	private String Text;
+	
+	@Column(name = "Bookmarked_Status")
+	private Boolean isBookMarked;
+	
+	@Column(name = "Shared_Status")
+	private Boolean isShared;
+	
+	
+	@Column(name = "is_Liked")
+	private Boolean isLiked;
+	
+	@Column(name = "is_Rated")
+	private Boolean isRated;
+	
+	@ManyToOne(cascade=CascadeType.ALL)
+	@JoinColumn(name ="USR_DET_ID")
+	private UserProfile profile;
+	
+	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
+	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)		
+	@JoinColumn(name="file_Id")
+	private List<LikedUsers> likedUsers;
+	
 	
 	/**
 	 * @return the text
@@ -74,27 +97,6 @@ public class MediaFiles implements Serializable{
 		Text = text;
 	}
 
-	@Column(name = "Bookmarked_Status")
-	private Boolean isBookMarked;
-
-	@Column(name = "Shared_Status")
-	private Boolean isShared;
-
-
-	@Column(name = "is_Liked")
-	private Boolean isLiked;
-	@Column(name = "is_Rated")
-	private Boolean isRated;
-	
-	@ManyToOne(cascade=CascadeType.ALL)
-	@JoinColumn(name ="USR_DET_ID")
-	private UserProfile profile;
-
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)		
-	@JoinColumn(name="file_Id")
-	private List<LikedUsers> likedUsers;
-	
 	
 	public MediaFiles(String fileName,LocalDateTime createDate,LocalDateTime lastModifiedDate) {
 		this.filePath=fileName;
@@ -147,11 +149,11 @@ public class MediaFiles implements Serializable{
 		this.likes = likes;
 	}
 
-	public Long getRating() {
+	public Float getRating() {
 		return rating;
 	}
 
-	public void setRating(Long rate) {
+	public void setRating(Float rate) {
 		this.rating = rate;
 	}
 

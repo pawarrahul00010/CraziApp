@@ -36,7 +36,9 @@ import com.technohertz.payload.UploadFileResponse;
 import com.technohertz.repo.MediaFileRepo;
 import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IMediaFileService;
+import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.CommonUtil;
 import com.technohertz.util.ResponseObject;
 
 @RestController
@@ -57,10 +59,15 @@ public class FileController {
 	@Autowired
 	private UserRegisterRepository registerRepository;
 	
+	@Autowired
+	private IUserRegisterService userRegisterService;
+
 	 @Autowired
 	private Constant constant;
+		
+	@Autowired
+	private CommonUtil commonUtil;
 
-	
     @Autowired
 	private ResponseObject response;
     
@@ -210,7 +217,7 @@ public class FileController {
 			LikedUsers likedUsers = new LikedUsers();
 			likedUsers.setUserName(userRegister.getUserName());
 			likedUsers.setMarkType(Constant.LIKE);
-			likedUsers.setRating(0);
+			likedUsers.setRating(0.0f);
 			likedUsers.setUserId(userId);
 			mediaFiles.setLikes(count+1);
 			mediaFiles.setIsLiked(true);
@@ -254,25 +261,8 @@ public class FileController {
 			@RequestParam(value="rateCount", required=false) String rateCounts,
 			@RequestParam(value = "userId", required=false) Integer  userId) {
 		
-		
-		if(userId == null) {
-			response.setError("1");
-			response.setMessage("'userId' is empty or null please check");
-			response.setData(empty);
-			response.setStatus("FAIL");
+		if(isRated == null) {
 			
-			return ResponseEntity.ok(response);
-			
-		}
-		else if(userfileid == null) {
-			response.setError("1");
-			response.setMessage("'fileid' is empty or null please check");
-			response.setData(empty);
-			response.setStatus("FAIL");
-			
-			return ResponseEntity.ok(response);
-			
-		}else if(isRated == null) {
 			response.setError("1");
 			response.setMessage("'isRated' is empty or null please check");
 			response.setData(empty);
@@ -281,6 +271,7 @@ public class FileController {
 			return ResponseEntity.ok(response);
 			
 		}else if(rateCounts == null) {
+			
 			response.setError("1");
 			response.setMessage("'rateCount' is empty or null please check");
 			response.setData(empty);
@@ -288,19 +279,35 @@ public class FileController {
 			
 			return ResponseEntity.ok(response);
 			
+		}else if(userfileid == null) {
+			
+			response.setError("1");
+			response.setMessage("'fileid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(userId == null) {
+			
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
 		}else {
 		
-		int cRate = Integer.parseInt(rateCounts);
-		
-		
+			int cRate = Integer.parseInt(rateCounts);
 
 			int fileid = 0;
-			int rateCount = 0;
+			Float rateCount = 0.0f;
 			boolean isRate = false;
 			try {
 				isRate = Boolean.parseBoolean(isRated);
 				fileid = Integer.parseInt(userfileid);
-				rateCount = Integer.parseInt(rateCounts);
+				rateCount = Float.parseFloat(rateCounts);
 			} catch (Exception e) {
 
 				response.setError("1");
@@ -311,24 +318,24 @@ public class FileController {
 
 			}
 			UserRegister userRegister = registerRepository.getOne(userId);
+			
 			List<LikedUsers> likedUsersList= mediaFileService.getUserRatingByFileId(fileid, userId);
 
 			MediaFiles mediaFiles= mediaFileRepo.getById(fileid);
 			
-			long rate=0;
-			System.out.println(mediaFiles.getLikes());
+			List<LikedUsers> likedUserlist = mediaFileService.getRatingByFileId(fileid);
 			
+			Float rating = 0.0f;
 			
-			if(mediaFiles.getRating() == null || mediaFiles.getRating() == 0) {
+			if(rating == null || rating == 0) {
 
-				rate=0;
+				rating=0.0f;
 
-			} else{
-
-				rate=mediaFiles.getRating();
-			}
+			} 
 
 			if(likedUsersList.isEmpty()) {
+				
+				rating = commonUtil.getupdateRating(likedUserlist, rateCount, 0);
 				
 				LikedUsers likedUsers=new LikedUsers();
 				likedUsers.setUserName(userRegister.getUserName());
@@ -337,8 +344,7 @@ public class FileController {
 				likedUsers.setRating(rateCount);
 				likedUsers.setTypeId(0);
 				
-				rate = rate+rateCount;
-				mediaFiles.setRating(rate);
+				mediaFiles.setRating(rating);
 				mediaFiles.setIsRated(true);
 				mediaFiles.getLikedUsers().add(likedUsers); 
 				mediaFileRepo.save(mediaFiles);
@@ -349,24 +355,20 @@ public class FileController {
 				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
 
-			}
-			else {
+			}else {
 				
 				LikedUsers likedUsers=likedUsersList.get(0);
 				
-						if(rate>=0) {
-							rate = rate-likedUsers.getRating();
-							rate = rate+rateCount;
-							likedUsers.setUserName(userRegister.getUserName());
-							likedUsers.setMarkType(Constant.RATE);
-							likedUsers.setUserId(userId);
-							likedUsers.setRating(rateCount);
-							mediaFiles.getLikedUsers().add(likedUsers); 
+				rating = commonUtil.getupdateRating(likedUserlist, rateCount, likedUsers.getTypeId());
 							
-						}
-
+				likedUsers.setUserName(userRegister.getUserName());
+				likedUsers.setMarkType(Constant.RATE);
+				likedUsers.setUserId(userId);
+				likedUsers.setRating(rateCount);
+				mediaFiles.getLikedUsers().add(likedUsers); 
+							
 				mediaFiles.setIsRated(true);
-				mediaFiles.setRating(rate);
+				mediaFiles.setRating(rating);
 				mediaFileRepo.save(mediaFiles);
 
 				response.setError("0");
@@ -375,8 +377,7 @@ public class FileController {
 				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
 			}
-		  }
-		
+		}
 	}
 	
 	@PostMapping("/bookmark")
@@ -411,7 +412,7 @@ public class FileController {
 			likedUsers.setUserName(userRegister.getUserName());
 			likedUsers.setMarkType(Constant.BOOKMARK);
 			likedUsers.setUserId(userId);
-			likedUsers.setRating(0);
+			likedUsers.setRating(0.0f);
 			mediaFiles.setIsBookMarked(true);
 			mediaFiles.getLikedUsers().add(likedUsers); 
 			mediaFileRepo.save(mediaFiles);
@@ -482,7 +483,7 @@ public class FileController {
 	
 	@PostMapping("/getmedia")
 	public ResponseEntity<ResponseObject> getAllMedia(@RequestParam(value = "userId", required = false) Integer  userId) {
-
+		
 		if(userId == null) {
 			response.setError("1");
 			response.setMessage("'userId' is empty or null please check");
@@ -493,25 +494,40 @@ public class FileController {
 			
 		}else {
 			
-		List<MediaFiles> mediaFilesList= mediaFileService.getAllMediaByUserId(userId);
-		
-		if(mediaFilesList.isEmpty()) {
-						
-			response.setError("0");
-			response.setMessage("user does not have any files");
-			response.setData(empty);
-			response.setStatus("SUCCESS");
-			return ResponseEntity.ok(response);
-		}
-		else {
+			List<UserRegister> register = new ArrayList<UserRegister>();
 			
-			response.setError("0");	
-			response.setMessage("successfully fetched");
-			response.setData(mediaFilesList);
-			response.setStatus("SUCCESS");
-			return ResponseEntity.ok(response);
-
-		}
+			register = userRegisterService.getById(userId);
+			
+			if(!register.isEmpty()) {
+				
+				List<MediaFiles> mediaFilesList= mediaFileService.getAllMediaByUserId(register.get(0).getProfile().getProfileId());
+				if(mediaFilesList.isEmpty()) {
+					
+					response.setError("0");
+					response.setMessage("user does not have any files");
+					response.setData(empty);
+					response.setStatus("SUCCESS");
+					return ResponseEntity.ok(response);
+				}
+				else {
+					
+					response.setError("0");	
+					response.setMessage("successfully fetched");
+					response.setData(mediaFilesList);
+					response.setStatus("SUCCESS");
+					return ResponseEntity.ok(response);
+					
+				}
+			}else {
+				response.setError("1");
+				response.setMessage("user does not exist");
+				response.setData(empty);
+				response.setStatus("FAIL");
+				
+				return ResponseEntity.ok(response);
+			}
+			
+		
 		}
 	
 	}

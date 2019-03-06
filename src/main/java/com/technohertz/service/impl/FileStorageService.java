@@ -109,7 +109,7 @@ public class FileStorageService {
 			mediaFile.setIsLiked(false);
 			mediaFile.setLikes(0l);
 			mediaFile.setViewer(0l);
-			mediaFile.setRating(0l);
+			mediaFile.setRating(0.0f);
 			mediaFile.setIsRated(false);
 			mediaFile.setIsBookMarked(false);
 			mediaFile.setCreateDate(dateUtil.getDate());
@@ -148,7 +148,7 @@ public class FileStorageService {
 						mediaFile.setIsLiked(false);
 						mediaFile.setLikes(0l);
 						mediaFile.setViewer(0l);
-						mediaFile.setRating(0l);
+						mediaFile.setRating(0.0f);
 						mediaFile.setIsRated(false);
 						mediaFile.setIsBookMarked(false);
 						mediaFile.setCreateDate(dateUtil.getDate());
@@ -203,7 +203,7 @@ public class FileStorageService {
 							mfile.setIsLiked(false);
 							mfile.setLikes(0l);
 							mfile.setViewer(0l);
-							mfile.setRating(0l);
+							mfile.setRating(0.0f);
 							mfile.setIsRated(false);
 							mfile.setIsBookMarked(false);
 							mfile.setCreateDate(dateUtil.getDate());
@@ -266,7 +266,7 @@ public class FileStorageService {
 			mfile.setIsRated(false);
 			mfile.setLikes(0l);
 			mfile.setViewer(0l);
-			mfile.setRating(0l);
+			mfile.setRating(0.0f);
 			mfile.setIsBookMarked(false);
 			mfile.setCreateDate(dateUtil.getDate());
 			mfile.setLastModifiedDate(dateUtil.getDate());
@@ -308,7 +308,7 @@ public class FileStorageService {
 			mfile.setLikes(0l);
 			mfile.setViewer(0l);
 			mfile.setFileType(Constant.GROUPPROFILE);
-			mfile.setRating(0l);
+			mfile.setRating(0.0f);
 			mfile.setIsRated(false);
 			mfile.setIsBookMarked(false);
 			
@@ -378,7 +378,7 @@ public class FileStorageService {
 	@Transactional
 	@SuppressWarnings("unchecked")
 	public List<MediaFiles> getAllProfileById(Integer userId) {
-		return entityManager.createNativeQuery("select * from media_files  where usr_det_id=:userId AND File_Type=:PROFILE ORDER BY file_id  DESC",MediaFiles.class)
+		return entityManager.createNativeQuery("SELECT * FROM media_files  WHERE usr_det_id=:userId AND File_Type=:PROFILE ORDER BY file_id  DESC",MediaFiles.class)
 				.setParameter("userId", userId)	.setParameter("PROFILE", "PROFILE")
 				.getResultList();
 	}
@@ -430,7 +430,7 @@ public class FileStorageService {
 					mediaFile.setIsLiked(false);
 					mediaFile.setLikes(0l);
 					mediaFile.setViewer(0l);
-					mediaFile.setRating(0l);
+					mediaFile.setRating(0.0f);
 					mediaFile.setText(text);
 					mediaFile.setIsRated(false);
 					mediaFile.setIsBookMarked(false);

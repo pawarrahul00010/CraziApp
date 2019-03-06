@@ -20,11 +20,17 @@ import org.springframework.web.bind.annotation.RestController;
 import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Biometric;
 import com.technohertz.model.Empty;
+import com.technohertz.model.MediaFiles;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserOtp;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
+import com.technohertz.service.IGroupProfileService;
+import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.IUserRegisterService;
+import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.CommonUtil;
+import com.technohertz.util.GetProfile;
 import com.technohertz.util.OtpUtil;
 import com.technohertz.util.ResponseObject;
 import com.technohertz.util.sendSMS;
@@ -37,9 +43,18 @@ public class UserRegisterController {
 	private IUserRegisterService userRegisterService;
 	
 	@Autowired
-	private Empty empty;
-	@Autowired
+	private IMediaFileService mediaFileService;
 
+	@Autowired
+	private CommonUtil commonUtil;
+	
+	@Autowired
+	private Empty empty;
+	
+	@Autowired
+	private IGroupProfileService groupProfileService;
+
+	@Autowired
 	private EntityManager entitymanager;
 
 	@Autowired
@@ -47,6 +62,11 @@ public class UserRegisterController {
 	
 	@Autowired
 	private OtpUtil util;
+	
+	
+	@Autowired
+	private FileStorageService fileStorageService;
+ 
 	
 	@Autowired
 	private sendSMS sms;
@@ -91,6 +111,76 @@ public class UserRegisterController {
 			if(!register.isEmpty()) {
 			response.setMessage("your data is retrived successfully");
 			response.setData(register);
+			response.setError("0");
+			response.setStatus("success");
+			return ResponseEntity.ok(response);	
+			}
+			else {
+				response.setMessage("no data found");
+				response.setData(empty);
+				response.setError("0");
+				response.setStatus("FAIL");
+				return ResponseEntity.ok(response);		
+			}
+			
+		}
+	}
+	
+	@GetMapping("/userprofile/{userId}")
+	public ResponseEntity<ResponseObject> getUserProfile(@PathVariable(value = "userId", required=false) String userid) {
+		
+		if(userid == null) {
+			
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+			int userId = 0;
+			List<UserRegister> register = new ArrayList<UserRegister>();
+			try {
+				
+				userId = Integer.parseInt(userid);
+				register = userRegisterService.getById(userId);
+				
+			} catch (NumberFormatException e) {
+				
+				response.setError("1");
+				response.setMessage("wrong userId please enter numeric value");
+				response.setData(empty);
+				response.setStatus("FAIL");
+				return ResponseEntity.ok(response);
+				
+			}
+			
+			if(!register.isEmpty()) {
+				
+				UserRegister userRegister = register.get(0);
+				
+				GetProfile getProfile = new GetProfile();
+				
+				getProfile.setUserId(userId);
+				
+				getProfile.setUser(userRegister.getUserName());
+				
+				getProfile.setGroupList(groupProfileService.getUserGroupdetailByUserId(userRegister.getMobilNumber()));
+				getProfile.setBookmarkList(mediaFileService.getBookmarksByUserId(userId));
+				List<MediaFiles> profileList = fileStorageService.getAllProfileById(userRegister.getProfile().getProfileId());
+				getProfile.setPhotos(mediaFileService.getAllProfileCountById(userId));
+				Float rating = commonUtil.getRating(profileList);
+				Long likes = commonUtil.getLikes(profileList);
+				
+				getProfile.setRating(rating);
+				getProfile.setLikes(likes);
+	//			getProfile.setUserProfile(userProfile);
+				getProfile.setProfileList(profileList);
+			
+			response.setMessage("your data is retrived successfully");
+			response.setData(getProfile);
 			response.setError("0");
 			response.setStatus("success");
 			return ResponseEntity.ok(response);	

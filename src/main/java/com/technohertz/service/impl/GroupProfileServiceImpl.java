@@ -46,18 +46,14 @@ public class GroupProfileServiceImpl implements IGroupProfileService{
 	@Override
 	public List<GroupProfile> getUserGroupdetailByUserId(String contactNumber) {
 		
-		return entityManager.createNativeQuery("SELECT * FROM group_profile WHERE group_id IN"
-				+ " ( SELECT " + 
-				"	g.group_profile_group_id FROM " + 
-				"	group_profile_group_member g  INNER JOIN group_profile u"
-				+ " ON g.group_member_contact_id IN "
-						+ "("
-						+ " SELECT contact_id FROM user_contact WHERE contact_number=:contactNumber"
-						+ ")"
-				+ "GROUP BY g.group_profile_group_id"
-				+ ")", GroupProfile.class)
+		return entityManager.createNativeQuery(
+				"SELECT * FROM group_profile WHERE group_id IN"
+						+"( SELECT group_id FROM  " 
+								+ "group_profile_group_member   WHERE contact_id IN "
+								+"(SELECT contact_id FROM user_contact WHERE contact_number=:contactNumber)"
+								+ "GROUP BY group_id "
+						+" )", GroupProfile.class)
 				 .setParameter("contactNumber", contactNumber).getResultList();
-
 	}
 
 	@SuppressWarnings("unchecked")

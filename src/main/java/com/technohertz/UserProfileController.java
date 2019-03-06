@@ -30,6 +30,8 @@ import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.CommonUtil;
+import com.technohertz.util.OtpUtil;
 import com.technohertz.util.ResponseObject;
 
 
@@ -40,7 +42,9 @@ public class UserProfileController {
 	@Autowired
 	private UserProfileRepository userprofilerepo;
 	
-	
+	@Autowired
+	private CommonUtil commonUtil;
+
 	@Autowired
 	private Empty empty;
 	
@@ -292,12 +296,12 @@ public class UserProfileController {
 			int cRate = Integer.parseInt(rateCounts);
 
 			int fileid = 0;
-			int rateCount = 0;
+			Float rateCount = 0.0f;
 			boolean isRate = false;
 			try {
 				isRate = Boolean.parseBoolean(isRated);
 				fileid = Integer.parseInt(userfileid);
-				rateCount = Integer.parseInt(rateCounts);
+				rateCount = Float.parseFloat(rateCounts);
 			} catch (Exception e) {
 
 				response.setError("1");
@@ -308,24 +312,26 @@ public class UserProfileController {
 
 			}
 			UserRegister userRegister = registerRepository.getOne(userId);
+			
+			
+			
 			List<LikedUsers> likedUsersList= mediaFileService.getUserRatingByFileId(fileid, userId);
 
 			MediaFiles mediaFiles= mediaFileRepo.getById(fileid);
 			
-			long rate=0;
-			System.out.println(mediaFiles.getLikes());
+			List<LikedUsers> likedUserlist = mediaFileService.getRatingByFileId(fileid);
 			
+			Float rating = 0.0f;
 			
-			if(mediaFiles.getRating() == null || mediaFiles.getRating() == 0) {
+			if(rating == null || rating == 0) {
 
-				rate=0;
+				rating=0.0f;
 
-			} else{
-
-				rate=mediaFiles.getRating();
-			}
+			} 
 
 			if(likedUsersList.isEmpty()) {
+				
+				rating = commonUtil.getupdateRating(likedUserlist, rateCount, 0);
 				
 				LikedUsers likedUsers=new LikedUsers();
 				likedUsers.setUserName(userRegister.getUserName());
@@ -334,8 +340,7 @@ public class UserProfileController {
 				likedUsers.setRating(rateCount);
 				likedUsers.setTypeId(0);
 				
-				rate = rate+rateCount;
-				mediaFiles.setRating(rate);
+				mediaFiles.setRating(rating);
 				mediaFiles.setIsRated(true);
 				mediaFiles.getLikedUsers().add(likedUsers); 
 				mediaFileRepo.save(mediaFiles);
@@ -349,10 +354,9 @@ public class UserProfileController {
 			}else {
 				
 				LikedUsers likedUsers=likedUsersList.get(0);
-				
-						if(rate>=0) {
-							rate = rate-likedUsers.getRating();
-							rate = rate+rateCount;
+				rating = commonUtil.getupdateRating(likedUserlist, rateCount, likedUsers.getTypeId());
+						if(rating>=0) {
+							
 							likedUsers.setUserName(userRegister.getUserName());
 							likedUsers.setMarkType(Constant.RATE);
 							likedUsers.setUserId(userId);
@@ -362,7 +366,7 @@ public class UserProfileController {
 						}
 
 				mediaFiles.setIsRated(true);
-				mediaFiles.setRating(rate);
+				mediaFiles.setRating(rating);
 				mediaFileRepo.save(mediaFiles);
 
 				response.setError("0");

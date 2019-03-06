@@ -79,9 +79,28 @@ public class MediaFileServiceImpl implements IMediaFileService{
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<MediaFiles> getAllMediaByUserId(int userId) {
-		return entityManager.createNativeQuery("SELECT * FROM media_files WHERE file_id IN (SELECT file_id from liked_users where user_id=:userId) ",MediaFiles.class)
+		return entityManager.createNativeQuery("SELECT * FROM media_files WHERE usr_det_id=:userId ",MediaFiles.class)
 				.setParameter("userId", userId).getResultList();
 	}
 
+	@Transactional
+	@Override
+	public Number  getAllProfileCountById(Integer userId) {
+		
+		return (Number ) entityManager.createNativeQuery("SELECT COUNT(*) FROM media_files  WHERE usr_det_id=:userId AND File_Type=:PROFILE ORDER BY file_id  DESC")
+				.setParameter("userId", userId)	.setParameter("PROFILE", "PROFILE")
+				.getSingleResult();
+		
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public List<LikedUsers> getRatingByFileId(int userfileid) {
+		
+		return entityManager.createNativeQuery("SELECT * FROM liked_users WHERE file_id IN (:fileid) AND TYPE IN(:type)",LikedUsers.class)
+				.setParameter("fileid", userfileid)
+				.setParameter("type", Constant.RATE)
+				.getResultList();
+	}
 
 }

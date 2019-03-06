@@ -1,5 +1,6 @@
 package com.technohertz.service;
 
+import java.math.BigInteger;
 import java.util.List;
 
 import com.technohertz.model.LikedUsers;
@@ -19,5 +20,9 @@ public interface IMediaFileService {
 	List<LikedUsers> getUserViewExistOrNotByFileId(int userfileid, int userId);
 
 	List<MediaFiles> getAllMediaByUserId(int userId);
+	
+	public Number  getAllProfileCountById(Integer userId) ;
+
+	List<LikedUsers> getRatingByFileId(int userfileid);
 	
 }

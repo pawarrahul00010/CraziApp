@@ -7,6 +7,8 @@ import java.util.TreeMap;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import com.technohertz.model.LikedUsers;
+import com.technohertz.model.MediaFiles;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserRegister;
 import com.technohertz.service.IUserRegisterService;
@@ -76,5 +78,57 @@ public class CommonUtil {
 				
 			return userCurrentProfileList;
 		}
+		
+		public Float getRating(List<MediaFiles> mediaFileslist) {
+			
+			Float rate = 0.0f;
+			
+			int count = 0;
+			
+			for(MediaFiles mediaFiles : mediaFileslist) {
+				
+				rate = rate + mediaFiles.getRating();
+				count = count + 1;
+			}
+			rate = rate/count;
+			
+			return rate;
+		}
+
+		public Float getupdateRating(List<LikedUsers> likedUserlist, Float rateCount, Integer typeId) {
+			
+			Float rate = 0.0f;
+			int count = 0;
+			
+			for(LikedUsers likedUser : likedUserlist) {
+				
+				if(likedUser.getTypeId()== typeId) {
+					
+				}else {
+					
+					rate = rate + likedUser.getRating();
+					
+					count = count + 1;
+				}
+				
+			}
+			rate = (rate+rateCount)/(count+1);
+			
+			return rate;
+		}
+
+		public Long getLikes(List<MediaFiles> profileList) {
+			
+			Long likes = 0l;
+			
+			for(MediaFiles mediaFiles:profileList) {
+				
+				likes = likes + mediaFiles.getLikes();
+				
+			}
+			
+			return likes;
+		}
+
 		
 	}

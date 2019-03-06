@@ -35,6 +35,7 @@ import com.technohertz.repo.MediaFileRepo;
 import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.CommonUtil;
 import com.technohertz.util.ResponseObject;
 
 @RestController
@@ -45,6 +46,9 @@ public class LiveFeedController {
 	@Autowired
 	private Empty empty;
 	
+	@Autowired
+	private CommonUtil commonUtil;
+
 	@Autowired
 	private MediaFileRepo mediaFileRepo;
 	
@@ -452,6 +456,7 @@ public class LiveFeedController {
 			@RequestParam(value = "userId", required=false) Integer  userId) {
 		
 		if(isRated == null) {
+			
 			response.setError("1");
 			response.setMessage("'isRated' is empty or null please check");
 			response.setData(empty);
@@ -459,8 +464,8 @@ public class LiveFeedController {
 			
 			return ResponseEntity.ok(response);
 			
-		}
-		else if(rateCounts == null) {
+		}else if(rateCounts == null) {
+			
 			response.setError("1");
 			response.setMessage("'rateCount' is empty or null please check");
 			response.setData(empty);
@@ -469,6 +474,7 @@ public class LiveFeedController {
 			return ResponseEntity.ok(response);
 			
 		}else if(userfileid == null) {
+			
 			response.setError("1");
 			response.setMessage("'fileid' is empty or null please check");
 			response.setData(empty);
@@ -477,6 +483,7 @@ public class LiveFeedController {
 			return ResponseEntity.ok(response);
 			
 		}else if(userId == null) {
+			
 			response.setError("1");
 			response.setMessage("'userId' is empty or null please check");
 			response.setData(empty);
@@ -485,17 +492,16 @@ public class LiveFeedController {
 			return ResponseEntity.ok(response);
 			
 		}else {
+		
+			int cRate = Integer.parseInt(rateCounts);
 
 			int fileid = 0;
-			int rateCount = 0;
+			Float rateCount = 0.0f;
 			boolean isRate = false;
-			
 			try {
-				
 				isRate = Boolean.parseBoolean(isRated);
 				fileid = Integer.parseInt(userfileid);
-				rateCount = Integer.parseInt(rateCounts);
-				
+				rateCount = Float.parseFloat(rateCounts);
 			} catch (Exception e) {
 
 				response.setError("1");
@@ -505,65 +511,67 @@ public class LiveFeedController {
 				return ResponseEntity.ok(response);
 
 			}
+			UserRegister userRegister = registerRepository.getOne(userId);
+			
+			List<LikedUsers> likedUsersList= mediaFileService.getUserRatingByFileId(fileid, userId);
 
 			MediaFiles mediaFiles= mediaFileRepo.getById(fileid);
-
-			UserRegister userRegister =registerRepository.getOne(userId);
-			LikedUsers likedUsers=new LikedUsers();
-			likedUsers.setUserName(userRegister.getUserName());
-			likedUsers.setMarkType(Constant.RATE);
-			mediaFiles.getLikedUsers().add(likedUsers); 
-
-			//Long totalLikes=mediaFiles.getLikes();
-			long rate=0;
 			
-			if(mediaFiles.getRating() == null) {
-
-				rate=0;
-
-			} else{
-
-				rate=mediaFiles.getRating();
-			}
-
-			if(isRate==true&&  mediaFiles.getIsRated()==false ) {
+			List<LikedUsers> likedUserlist = mediaFileService.getRatingByFileId(fileid);
 			
-				rate = rate+rateCount;
-				mediaFiles.setRating(rate);
-				mediaFiles.setIsRated(isRate);
-				mediaFiles.setFileType(Constant.VIDEO);
+			Float rating = 0.0f;
+			
+			if(rating == null || rating == 0) {
+
+				rating=0.0f;
+
+			} 
+
+			if(likedUsersList.isEmpty()) {
+				
+				rating = commonUtil.getupdateRating(likedUserlist, rateCount, 0);
+				
+				LikedUsers likedUsers=new LikedUsers();
+				likedUsers.setUserName(userRegister.getUserName());
+				likedUsers.setMarkType(Constant.RATE);
+				likedUsers.setUserId(userId);
+				likedUsers.setRating(rateCount);
+				likedUsers.setTypeId(0);
+				
+				mediaFiles.setRating(rating);
+				mediaFiles.setIsRated(true);
+				mediaFiles.getLikedUsers().add(likedUsers); 
 				mediaFileRepo.save(mediaFiles);
 
 				response.setError("0");
-				response.setMessage("user rated with : "+rateCount);
+				response.setMessage("user rated with : "+cRate);
 				response.setData(mediaFiles);
 				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
 
-			}
-			else {
-
-				long totalcount=	mediaFiles.getRating();
-				rate = totalcount-Long.parseLong(rateCounts);
-					mediaFiles.setLikes(rate);
-					if(rate>=0) {
-					mediaFiles.setIsRated(false);
-					likedUsers.setMarkType(Constant.RATE);
-					mediaFiles.setRating(rate);
-				    mediaFileRepo.save(mediaFiles);
-			}
-
-
-				mediaFiles.setRating(rate);
+			}else {
+				
+				LikedUsers likedUsers=likedUsersList.get(0);
+				
+				rating = commonUtil.getupdateRating(likedUserlist, rateCount, likedUsers.getTypeId());
+							
+				likedUsers.setUserName(userRegister.getUserName());
+				likedUsers.setMarkType(Constant.RATE);
+				likedUsers.setUserId(userId);
+				likedUsers.setRating(rateCount);
+				mediaFiles.getLikedUsers().add(likedUsers); 
+				
+				mediaFiles.setIsRated(true);
+				mediaFiles.setRating(rating);
 				mediaFileRepo.save(mediaFiles);
 
-				response.setError("1");
-				response.setMessage("rating on image is not done");
-				response.setData(empty);
-				response.setStatus("FAIL");
+				response.setError("0");
+				response.setMessage("rating updated with "+cRate);
+				response.setData(mediaFiles);
+				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
 			}
 		}
-	}
 
-}
+	  }
+	}

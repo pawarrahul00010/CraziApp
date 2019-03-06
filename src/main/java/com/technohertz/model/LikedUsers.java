@@ -38,7 +38,7 @@ public class LikedUsers {
 	
 	@ColumnDefault("0")
 	@Column(name = "rating")
-	private Integer rating;
+	private Float rating;
 
 	public String getUserName() {
 		return userName;
@@ -90,13 +90,13 @@ public class LikedUsers {
 	/**
 	 * @return the rating
 	 */
-	public Integer getRating() {
+	public Float getRating() {
 		return rating;
 	}
 	/**
 	 * @param rating the rating to set
 	 */
-	public void setRating(Integer rating) {
+	public void setRating(Float rating) {
 		this.rating = rating;
 	}
 	/* (non-Javadoc)
