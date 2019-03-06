@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Biometric;
 import com.technohertz.model.Empty;
+import com.technohertz.model.GetVideos;
 import com.technohertz.model.MediaFiles;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserOtp;
@@ -27,10 +28,13 @@ import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
 import com.technohertz.service.IGroupProfileService;
 import com.technohertz.service.IMediaFileService;
+import com.technohertz.service.IUserProfileService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GetProfile;
+import com.technohertz.util.GetProfiles;
+import com.technohertz.util.ListGetProfiles;
 import com.technohertz.util.OtpUtil;
 import com.technohertz.util.ResponseObject;
 import com.technohertz.util.sendSMS;
@@ -41,6 +45,9 @@ public class UserRegisterController {
 
 	@Autowired
 	private IUserRegisterService userRegisterService;
+
+	@Autowired
+	private IUserProfileService userProfileService;
 	
 	@Autowired
 	private IMediaFileService mediaFileService;
@@ -72,9 +79,40 @@ public class UserRegisterController {
 	private sendSMS sms;
 	
 	
+	@SuppressWarnings("unused")
 	@GetMapping("/myprofile")
-	public List<UserRegister> getAllEmployees() {
-		return userRegisterService.getAll();
+	public ResponseEntity<ResponseObject> getAllEmployees() {
+
+		List<UserRegister> userLists= userRegisterService.getAll();
+		List<GetProfiles> profile=new ArrayList<GetProfiles>();
+
+		for(UserRegister userRegister :userLists) {
+			GetProfiles getProfile = new GetProfiles();
+			getProfile.setMobileno(userRegister.getMobilNumber());
+			getProfile.setUserName(userRegister.getUserName());
+			getProfile.setUserId(userRegister.getUserId());
+			getProfile.setFilePath(userRegister.getProfile().getCurrentProfile());
+			profile.add(getProfile);
+		}
+		
+		if(profile == null) {
+			
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+		else {
+			response.setError("0");
+			response.setMessage("User List are");
+			response.setData(profile);
+			response.setStatus("Success");
+			
+			return ResponseEntity.ok(response);
+		}
 	}
 
 	@GetMapping("/myprofile/{userId}")

@@ -60,6 +60,8 @@ public class UserRegisterServiceImpl implements IUserRegisterService {
 	@Override 
 	public List<UserRegister> getAll() { 
 		List<UserRegister> list=userRegisterRepo.findAll(); 
+//		@SuppressWarnings("unchecked")
+//		List<UserRegister> user= entityManager.createNativeQuery("select r.user_name,r.mobil_number,r.userid,u.current_Profile from User_Register r INNER JOIN User_Profile u on r.userid=u.USR_DET_ID ").getResultList();
 
 		return list; 
 	}

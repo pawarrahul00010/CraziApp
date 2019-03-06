@@ -18,6 +18,7 @@ public interface UserRegisterRepository extends JpaRepository<UserRegister, Inte
 	@Query(value="SELECT  r from UserRegister r WHERE r.userName=?1")
 	List<UserRegister> findByUserName(String userName);
 	
+	
 
 	@Query(value="SELECT  r from UserRegister r WHERE r.userId=?1")
 	List<UserRegister> getById(Integer userId);
