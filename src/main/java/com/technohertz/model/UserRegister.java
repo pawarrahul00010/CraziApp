@@ -43,17 +43,17 @@ public class UserRegister implements Serializable {
 	@Column(name = "userid")
 	private int userId;
 
-	@Column(name = "user_name", nullable = false, length = 100)
+	@Column(name = "user_name", nullable = false, length = 32)
 	private String userName;
 
-	@Column(name = "Source_From", nullable = true, length = 200)
+	@Column(name = "Source_From", nullable = true, length = 24)
 	private String sourceFrom;
 
-	@Column(name = "pass_word", nullable = false, length = 100)
+	@Column(name = "pass_word", nullable = false, length = 24)
 	private String password;
 
 
-	@Column(name = "mobil_number", nullable = false, length = 200)
+	@Column(name = "mobil_number", nullable = false, length = 13)
 	private String mobilNumber;
 	
 	@Column(name = "token", nullable = true, length = 200)

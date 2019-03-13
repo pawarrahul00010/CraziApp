@@ -6,6 +6,7 @@ import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
+import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
@@ -17,10 +18,10 @@ import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import org.hibernate.annotations.CollectionId;
 import org.hibernate.annotations.DynamicUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Entity
 @Table(name = "Group_Profile")
@@ -39,7 +40,7 @@ public class GroupProfile implements Serializable {
 	@Column(name = "Display_Name")
 	private String displayName;
 	
-	@Column(name = "created_By")
+	@Column(name = "created_By", nullable = true, length = 40)
 	private Integer createdBy;
 
 	@Column(name = "current_Profile")
@@ -47,6 +48,11 @@ public class GroupProfile implements Serializable {
 
 	@Column(name = "About_Group")
 	private String aboutGroup;
+	
+	@JsonIgnore
+	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
+	@JoinColumn(name = "GROUP_ID")
+	private java.util.Set<GroupAdmin> adminSet = new java.util.HashSet<GroupAdmin>();
 
 	@JsonIgnore
 	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
@@ -187,11 +193,19 @@ public class GroupProfile implements Serializable {
 		this.userList = userList;
 	}
 
+	public java.util.Set<GroupAdmin> getAdminSet() {
+		return adminSet;
+	}
+
+	public void setAdminSet(java.util.Set<GroupAdmin> adminSet) {
+		this.adminSet = adminSet;
+	}
+
 	@Override
 	public String toString() {
 		return "GroupProfile [groupId=" + groupId + ", displayName=" + displayName + ", createdBy=" + createdBy
-				+ ", currentProfile=" + currentProfile + ", aboutGroup=" + aboutGroup + ", files=" + files
-				+ ", groupMember=" + groupMember + ", userList=" + userList + "]";
+				+ ", currentProfile=" + currentProfile + ", aboutGroup=" + aboutGroup + ", adminSet=" + adminSet
+				+ ", files=" + files + ", groupMember=" + groupMember + ", userList=" + userList + "]";
 	}
 
 

@@ -1,6 +1,7 @@
 package com.technohertz.model;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,12 +41,20 @@ public class UserProfile implements Serializable{
 	
 	@Column(name = "About_User")
 	private String aboutUser;
+	
+	@Column(name = "File_Create_Date")
+	private LocalDateTime createDate;
 
 
 	 @JsonIgnore
 	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)
 	@JoinColumn(name="USR_DET_ID")
 	private List<MediaFiles> files=new ArrayList<MediaFiles>();
+
+	 @JsonIgnore
+	 @OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)
+	 @JoinColumn(name="USR_DET_ID")
+	 private List<SharedMedia> media=new ArrayList<SharedMedia>();
 
 	public Integer getProfileId() {
 		return profileId;
@@ -101,6 +110,34 @@ public class UserProfile implements Serializable{
 	public String toString() {
 		return "UserProfile [profileId=" + profileId + ", displayName=" + displayName + ", currentProfile="
 				+ currentProfile + ", aboutUser=" + aboutUser + ", files=" + files + "]";
+	}
+
+	/**
+	 * @return the media
+	 */
+	public List<SharedMedia> getMedia() {
+		return media;
+	}
+
+	/**
+	 * @param media the media to set
+	 */
+	public void setMedia(List<SharedMedia> media) {
+		this.media = media;
+	}
+
+	/**
+	 * @return the createDate
+	 */
+	public LocalDateTime getCreateDate() {
+		return createDate;
+	}
+
+	/**
+	 * @param createDate the createDate to set
+	 */
+	public void setCreateDate(LocalDateTime createDate) {
+		this.createDate = createDate;
 	}
 
 	

@@ -19,6 +19,7 @@ import javax.persistence.Table;
 import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.DynamicUpdate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @Entity
 @Table(name = "Media_Files")
@@ -73,6 +74,7 @@ public class MediaFiles implements Serializable{
 	@Column(name = "is_Rated")
 	private Boolean isRated;
 	
+	@JsonIgnore
 	@ManyToOne(cascade=CascadeType.ALL)
 	@JoinColumn(name ="USR_DET_ID")
 	private UserProfile profile;
