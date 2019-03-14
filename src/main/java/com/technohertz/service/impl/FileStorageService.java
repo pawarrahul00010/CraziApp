@@ -31,7 +31,6 @@ import com.technohertz.model.UserContact;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
 import com.technohertz.repo.GroupProfileRepository;
-import com.technohertz.repo.MediaFileRepo;
 import com.technohertz.repo.UserContactRepository;
 import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.service.IUserContactService;
@@ -46,8 +45,7 @@ public class FileStorageService {
 	@Autowired
 	public EntityManager entityManager;
 
-	@Autowired
-	private MediaFileRepo mediaFileRepo;
+
 	
 	@Autowired
 	private IUserContactService userContactService;
@@ -127,14 +125,14 @@ public class FileStorageService {
 	}
 	
 
-	public UserProfile storeFile(MultipartFile file, int userId,String fileType) {
+	public UserProfile storeFile(MultipartFile file, int fromUserId,String fileType) {
 		
 			List<UserProfile> userprofile = null;
-			userprofile = userprofileRepo.findById(userId);
+			userprofile = userprofileRepo.findById(fromUserId);
 			
 					if (!userprofile.isEmpty()) {
 					String fileName = StringUtils
-							.cleanPath(String.valueOf(userId) + System.currentTimeMillis() + getFileExtension(file));
+							.cleanPath(String.valueOf(fromUserId) + System.currentTimeMillis() + getFileExtension(file));
 					String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
 							.path(String.valueOf(fileName)).toUriString();
 					try {
@@ -170,7 +168,53 @@ public class FileStorageService {
 				return null;
 			} 
 		}
-	
+	public UserProfile shareFile(MultipartFile file, String fromUserId, String toUserId,String fileType) {
+		
+		List<UserProfile> userprofile = null;
+		userprofile = userprofileRepo.findById(Integer.parseInt(fromUserId));
+		
+				if (!userprofile.isEmpty()) {
+				String fileName = StringUtils
+						.cleanPath(String.valueOf(fromUserId) + System.currentTimeMillis() + getFileExtension(file));
+				String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
+						.path(String.valueOf(fileName)).toUriString();
+				try {
+					if (fileName.contains("..")) {
+						throw new FileStorageException("Sorry! Filename contains invalid path sequence " + fileName);
+					}
+//					SharedMedia sharedMedia =new SharedMedia();
+//					sharedMedia.setFilePath(fileDownloadUri);
+//					sharedMedia.setFormUser(fromUserId);
+//					sharedMedia.setToUser(toUserId);
+					MediaFiles mediaFile = new MediaFiles();
+					mediaFile.setFilePath(fileDownloadUri);
+					mediaFile.setFileType(fileType);
+					mediaFile.setIsLiked(false);
+					mediaFile.setLikes(0l);
+					mediaFile.setViewer(0l);
+					mediaFile.setRating(0.0f);
+					mediaFile.setIsRated(false);
+					mediaFile.setIsBookMarked(false);
+					mediaFile.setCreateDate(dateUtil.getDate());
+					mediaFile.setLastModifiedDate(dateUtil.getDate());
+					userprofile.get(0).getFiles().add(mediaFile);
+					Path targetLocation = this.fileStorageLocation.resolve(fileName);
+					Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+//					userprofile.get(0).getMedia().add(sharedMedia);
+					
+					return userprofileRepo.save(userprofile.get(0));
+					
+			} catch (IOException ex) {
+				
+				throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+				
+			}
+		} else {
+			
+			return null;
+		} 
+	}
+
 	
 	public UserProfile saveProfile(MultipartFile file, int userId) {
 
@@ -210,6 +254,7 @@ public class FileStorageService {
 							mfile.setLastModifiedDate(dateUtil.getDate());
 							mfile.setFileType("PROFILE");
 							userprofile.get(0).setProfileId(userId);
+							userprofile.get(0).setCreateDate(dateUtil.getDate());
 							userprofile.get(0).setCurrentProfile(fileDownloadUri);
 							userprofile.get(0).getFiles().add(mfile);
 							Path targetLocation = this.fileStorageLocation.resolve(fileName);
@@ -241,7 +286,7 @@ public class FileStorageService {
 				}
 		}
 	
-	public UserProfile saveAllProfile(MultipartFile file, int userId,String DisplayName) {
+	public UserProfile saveAllProfile(MultipartFile file, int userId,String DisplayName,String aboutUser) {
 		// Normalize file name
 
 		
@@ -273,6 +318,7 @@ public class FileStorageService {
 			mfile.setFileType("PROFILE");
 			userprofile.get(0).setProfileId(userId);
 			userprofile.get(0).setCurrentProfile(fileDownloadUri);
+			userprofile.get(0).setAboutUser(aboutUser);
 			userprofile.get(0).setDisplayName(DisplayName);
 			userprofile.get(0).getFiles().add(mfile);
 			Path targetLocation = this.fileStorageLocation.resolve(fileName);

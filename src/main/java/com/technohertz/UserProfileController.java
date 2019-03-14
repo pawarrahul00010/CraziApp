@@ -31,7 +31,6 @@ import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
-import com.technohertz.util.OtpUtil;
 import com.technohertz.util.ResponseObject;
 
 
@@ -449,6 +448,7 @@ public class UserProfileController {
     @PostMapping("/profile")
     public  ResponseEntity<ResponseObject> saveProfile(@RequestParam(value ="file", required=false) MultipartFile file,
     		@RequestParam(value ="DisplayName", required=false) String DisplayName,
+    		@RequestParam(value ="aboutUser", required=false) String aboutUser,
     		@RequestParam(value = "userId", required=false) Integer  userId) {
      
     	if(file == null) {
@@ -480,7 +480,7 @@ public class UserProfileController {
 			
 		}else {
 			
-	    	UserProfile userProfile = fileStorageService.saveAllProfile(file,userId,DisplayName);
+	    	UserProfile userProfile = fileStorageService.saveAllProfile(file,userId,DisplayName,aboutUser);
 	    	MediaFiles files=mediaFileRepo.getOne(Integer.valueOf(String.valueOf(userProfile.getFiles().get(userProfile.getFiles().size()-1).getFileId())));
 	       
 	       Object obj=new UploadFileResponse(files.getFilePath(), userProfile.getCurrentProfile(),

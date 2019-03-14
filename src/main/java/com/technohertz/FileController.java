@@ -30,10 +30,12 @@ import com.technohertz.model.Empty;
 import com.technohertz.model.GetImage;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
+import com.technohertz.model.SharedMedia;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
 import com.technohertz.payload.UploadFileResponse;
 import com.technohertz.repo.MediaFileRepo;
+import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.IUserRegisterService;
@@ -45,6 +47,9 @@ import com.technohertz.util.ResponseObject;
 public class FileController {
 	@Autowired
 	private Empty empty;
+
+	@Autowired
+	private UserProfileRepository userProfileRepository;
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
     
 	@Autowired
@@ -532,7 +537,82 @@ public class FileController {
 	
 	}
 
-	
+	  
+    @SuppressWarnings("unused")
+   	@PostMapping("/shreImage")
+       public ResponseEntity<ResponseObject> shreImage(@RequestParam(value="file", required=false) MultipartFile file,
+       		@RequestParam(value="fileType", required=false)String fileType,
+       		@RequestParam(value = "fromUserId", required=false) String  fromUserId,@RequestParam(value = "toUserId", required=false) String  toUserId) {
+        
+       	if(file == null) {
+   			response.setError("1");
+   			response.setMessage("'file' is empty or null please check");
+   			response.setData(empty);
+   			response.setStatus("FAIL");
+   			
+   			return ResponseEntity.ok(response);
+   			
+   		}
+   		else if(fileType == null) {
+   			response.setError("1");
+   			response.setMessage("'fileType' is empty or null please check");
+   			response.setData(empty);
+   			response.setStatus("FAIL");
+   			
+   			return ResponseEntity.ok(response);
+   			
+   		}else if(fromUserId == null) {
+   			response.setError("1");
+   			response.setMessage("'userId' is empty or null please check");
+   			response.setData(empty);
+   			response.setStatus("FAIL");
+   			
+   			return ResponseEntity.ok(response);
+   			
+   		}else {
+   			
+       	UserProfile fileName = fileStorageService.shareFile(file, fromUserId,toUserId,fileType);
+        SharedMedia sharedMedia =new SharedMedia();
+           if (fileName != null) {
+   			Object obj = new UploadFileResponse(fileName.getFiles().get(fileName.getFiles().size() - 1).getFilePath(),
+   					fileName.getFiles().get(0).getFilePath(), file.getContentType(), file.getSize());
+   			if (!file.isEmpty() || fromUserId != null) {
+   				sharedMedia.setFilePath(fileName.getFiles().get(fileName.getFiles().size() - 1).getFilePath());
+				sharedMedia.setFormUser(fromUserId);
+				sharedMedia.setToUser(toUserId);
+				sharedMedia.setFileId(fileName.getFiles().get(fileName.getFiles().size() - 1).getFileId());
+				fileName.getMedia().add(sharedMedia);
+				userProfileRepository.save(fileName);
+   				response.setMessage("your File is Shared successfully");
+   				
+   				response.setData(sharedMedia);
+   				response.setError("0");
+   				response.setStatus("SUCCESS");
+
+   				return ResponseEntity.ok(response);
+   			} else {
+   				response.setMessage("your File is not uploaded");
+
+   				response.setData(empty);
+   				response.setError("1");
+   				response.setStatus("FAIL");
+
+   				return ResponseEntity.ok(response);
+   			} 
+   		}else {
+   			response.setMessage("User does not exist please register first");
+
+   			response.setData(empty);
+   			response.setError("1");
+   			response.setStatus("FAIL");
+
+   			return ResponseEntity.ok(response);
+   		}
+   	  }
+       }
+       
+    
+
     @SuppressWarnings({ "static-access", "unused" })
 	@RequestMapping(value ="/greet" ,method=RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
     public  ResponseEntity<ResponseObject> uploadVideos(@RequestParam(value ="file", required = false) MultipartFile file,
