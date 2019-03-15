@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.technohertz.common.Constant;
+import com.technohertz.model.Cards;
 import com.technohertz.model.Empty;
 import com.technohertz.model.GetImage;
 import com.technohertz.model.LikedUsers;
@@ -683,26 +684,39 @@ public class FileController {
 	  }
 	
     }
-	@GetMapping("/getAllGreet")
-	public ResponseEntity<ResponseObject> getAllProfilesById() {
+	@PostMapping("/getAllGreet")
+	public ResponseEntity<ResponseObject> getAllGreetingByThemeId(
+    		@RequestParam(value = "themeId", required = false) Integer  themeId,
+    		@RequestParam(value = "cardType", required = false) String  cardType) {
 		
-		List<MediaFiles> likedUsers=fileStorageService.getAllGreetings();
-		List<GetImage> image=new ArrayList<GetImage>();
-
-		for(MediaFiles mediaFiles :likedUsers) {
-			GetImage img = new GetImage();
-			img.setUser(mediaFiles.getFilePath());
-			img.setfileId(mediaFiles.getFileId());
-			image.add(img);
+		if(themeId == null) {
+			response.setError("1");
+			response.setMessage("'themeId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+    	else if(cardType == null) {
+			response.setError("1");
+			response.setMessage("'cardType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+    	else {
+			List<Cards> cardList=fileStorageService.getAllGreetings(themeId, cardType);
+	
+			response.setError("0");	
+			response.setMessage("successfully fetched");
+			response.setData(cardList);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+			
 		}
 
-		response.setError("0");	
-		response.setMessage("successfully fetched");
-		response.setData(image);
-		response.setStatus("SUCCESS");
-		return ResponseEntity.ok(response);
-		
 	}
-
-
 }

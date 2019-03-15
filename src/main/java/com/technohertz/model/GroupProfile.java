@@ -59,6 +59,12 @@ public class GroupProfile implements Serializable {
 	@JoinColumn(name = "GROUP_ID")
 	private List<MediaFiles> files = new ArrayList<MediaFiles>();
 
+	@JsonIgnore
+	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
+	@JoinColumn(name = "GROUP_ID")
+	private List<GroupPoll> groupPolls = new ArrayList<GroupPoll>();
+
+	
 	/*
 	 * @JsonIgnore
 	 * 
@@ -201,11 +207,22 @@ public class GroupProfile implements Serializable {
 		this.adminSet = adminSet;
 	}
 
+	
+	
+	public List<GroupPoll> getGroupPolls() {
+		return groupPolls;
+	}
+
+	public void setGroupPolls(List<GroupPoll> groupPolls) {
+		this.groupPolls = groupPolls;
+	}
+
 	@Override
 	public String toString() {
 		return "GroupProfile [groupId=" + groupId + ", displayName=" + displayName + ", createdBy=" + createdBy
 				+ ", currentProfile=" + currentProfile + ", aboutGroup=" + aboutGroup + ", adminSet=" + adminSet
-				+ ", files=" + files + ", groupMember=" + groupMember + ", userList=" + userList + "]";
+				+ ", files=" + files + ", groupPolls=" + groupPolls + ", groupMember=" + groupMember + ", userList="
+				+ userList + "]";
 	}
 
 

@@ -15,19 +15,27 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.technohertz.exception.ResourceNotFoundException;
+import com.technohertz.model.AdminProfile;
 import com.technohertz.model.AdminRegister;
+import com.technohertz.model.CardCategory;
 import com.technohertz.model.Empty;
+import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
+import com.technohertz.payload.UploadFileResponse;
 import com.technohertz.service.IAdminRegisterService;
 import com.technohertz.service.IUserRegisterService;
+import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.ResponseObject;
 
 @RestController
 @RequestMapping("/adminRest")
 public class AdminRegisterController {
 
+	@Autowired
+	FileStorageService fileStorageService;
 	@Autowired
 	private IAdminRegisterService adminRegisterService;
 	
@@ -277,4 +285,168 @@ public class AdminRegisterController {
 		return rand;
 
 	}
+	
+	
+    @SuppressWarnings("unused")
+	@PostMapping("/uploadCard")
+    public ResponseEntity<ResponseObject> uploadCards(@RequestParam(value="file", required=false) MultipartFile file,
+    		@RequestParam(value="fileType", required=false)String fileType,
+    		@RequestParam(value = "categoryId", required=false) Integer  categoryId,
+    		@RequestParam(value = "cardText", required=false) String cardText) {
+     
+    	if(file == null) {
+			response.setError("1");
+			response.setMessage("'file' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+		else if(fileType == null) {
+			response.setError("1");
+			response.setMessage("'fileType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(cardText == null) {
+			response.setError("1");
+			response.setMessage("'cardText' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(categoryId == null) {
+			response.setError("1");
+			response.setMessage("'categoryId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+    	CardCategory cardCategory = fileStorageService.storeCards(file,categoryId,cardText);
+     
+        if (cardCategory != null) {
+			Object obj = new UploadFileResponse(cardCategory.getCards().get(cardCategory.getCards().size()-1).getFilePath(),
+					cardCategory.getCards().get(cardCategory.getCards().size()-1).getFilePath(), file.getContentType(), file.getSize());
+			if (!file.isEmpty() || categoryId != null) {
+				response.setMessage("your File is uploaded successfully");
+
+				response.setData(obj);
+				response.setError("0");
+				response.setStatus("SUCCESS");
+
+				return ResponseEntity.ok(response);
+			} else {
+				response.setMessage("your File is not uploaded");
+
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("FAIL");
+
+				return ResponseEntity.ok(response);
+			} 
+		}else {
+			response.setMessage("User does not exist please register first");
+
+			response.setData(empty);
+			response.setError("1");
+			response.setStatus("FAIL");
+
+			return ResponseEntity.ok(response);
+		}
+	  }
+    }
+    
+    @SuppressWarnings("unused")
+	@PostMapping("/addCategory")
+    public ResponseEntity<ResponseObject> uploadCategory(@RequestParam(value="file", required=false) MultipartFile file,
+    		@RequestParam(value="categoryName", required=false)String categoryName,
+    		@RequestParam(value="adminId", required=false)Integer adminId,
+    		@RequestParam(value = "categoryType", required=false) String  categoryType) {
+     
+    	if(file == null) {
+			response.setError("1");
+			response.setMessage("'file' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+		else if(categoryName == null) {
+			response.setError("1");
+			response.setMessage("'CategoryName' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(categoryType == null) {
+			response.setError("1");
+			response.setMessage("'categoryType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(adminId == null) {
+			response.setError("1");
+			response.setMessage("'adminId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+    	AdminProfile adminProfile = fileStorageService.storeCards(file, adminId,categoryName,categoryType);
+    	
+    	List<CardCategory> cardCategoryList = adminProfile.getCardCategories();
+     
+        if (adminProfile != null) {
+        	
+        	Object obj=new UploadFileResponse(cardCategoryList.get(cardCategoryList.size()-1).getFilePath(),
+        			cardCategoryList.get(cardCategoryList.size()-1).getFilePath(), file.getContentType(), file.getSize());
+			
+			if (!file.isEmpty() || adminId != null) {
+				response.setMessage("your File is uploaded successfully");
+
+				response.setData(obj);
+				response.setError("0");
+				response.setStatus("SUCCESS");
+
+				return ResponseEntity.ok(response);
+			} else {
+				response.setMessage("your File is not uploaded");
+
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("FAIL");
+
+				return ResponseEntity.ok(response);
+			} 
+		}else {
+			response.setMessage("User does not exist please register first");
+
+			response.setData(empty);
+			response.setError("1");
+			response.setStatus("FAIL");
+
+			return ResponseEntity.ok(response);
+		}
+	  }
+    }    	
+	
+	
+	
+	
+	
+	
+	
 }

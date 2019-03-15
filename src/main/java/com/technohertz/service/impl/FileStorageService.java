@@ -24,6 +24,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.technohertz.common.Constant;
 import com.technohertz.exception.FileStorageException;
 import com.technohertz.exception.MyFileNotFoundException;
+import com.technohertz.model.AdminProfile;
+import com.technohertz.model.CardCategory;
+import com.technohertz.model.Cards;
 import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
@@ -31,6 +34,8 @@ import com.technohertz.model.PendoraBox;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
+import com.technohertz.repo.AdminProfileRepository;
+import com.technohertz.repo.CardCategoryRepository;
 import com.technohertz.repo.GroupProfileRepository;
 import com.technohertz.repo.PendoraBoxRepo;
 import com.technohertz.repo.UserContactRepository;
@@ -44,10 +49,15 @@ import com.technohertz.util.FileStorageProperties;
 public class FileStorageService {
 
 	private final Path fileStorageLocation;
+	
 	@Autowired
 	public EntityManager entityManager;
 
-
+	@Autowired
+	private AdminProfileRepository adminProfileRepository;
+	
+	@Autowired
+	private CardCategoryRepository cardCategoryRepository;
 	
 	@Autowired
 	private IUserContactService userContactService;
@@ -435,11 +445,10 @@ public class FileStorageService {
 				.getResultList();
 	}
 	
-	@Transactional
-	@SuppressWarnings({ "unchecked", "static-access" })
-	public List<MediaFiles> getAllGreetings() {
-		return entityManager.createNativeQuery("select * from media_files  where File_Type=:GREETING ORDER BY file_id  DESC",MediaFiles.class)
-				.setParameter("GREETING", Constant.GREETING)
+	public List<Cards> getAllGreetings(Integer themeId, String cardType) {
+		return entityManager.createQuery("from Cards c where c.fileType=:cardType and c.theme=:themeId ORDER BY CardId  DESC",Cards.class)
+				.setParameter("cardType", cardType)
+				.setParameter("themeId", themeId)
 				.getResultList();
 	}
 
@@ -573,6 +582,103 @@ public class FileStorageService {
 			int userid= entityManager.createNativeQuery("delete p,m from pendora_box p INNER JOIN media_files m ON p.pendora_id=m.pendora_id where p.usr_det_id=:userId").setParameter("userId",userId).executeUpdate();
 		return userid;
 			//delete r,u,o,b from User_Register r INNER JOIN User_Profile u on r.userid=u.USR_DET_ID INNER JOIN user_otp o on r.userid=o.otp_id INNER JOIN biometric_table b ON r.userid=b.biometric_id where userid=:userId
+		}
+		
+		
+		public CardCategory storeCards(MultipartFile file, Integer categoryId,String cardText) {
+					
+				List<CardCategory> cardCategoryList = cardCategoryRepository.getById(categoryId);
+				
+				Cards cards = new Cards();
+				String fileName = StringUtils
+						.cleanPath(String.valueOf(categoryId) + System.currentTimeMillis() + getFileExtension(file));
+				String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+						.path("/downloadFile/")
+						.path(String.valueOf(fileName))
+						.toUriString();
+				
+				try {
+					if (fileName.contains("..")) {
+						throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+					}
+					
+					
+							if (!cardCategoryList.isEmpty()) {
+								
+									cards.setFilePath(fileDownloadUri);
+									cards.setCreateDate(dateUtil.getDate());
+									cards.setCardCategory(cardCategoryList.get(0));
+									cards.setCardText(cardText);
+									
+									cardCategoryList.get(0).getCards().add(cards);
+									
+									Path targetLocation = this.fileStorageLocation.resolve(fileName);
+									Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+									return cardCategoryRepository.save(cardCategoryList.get(0));
+									
+								}else {
+									
+									return null;
+								}
+								
+						} catch (IOException ex) {
+						
+							throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+					
+						}
+			}
+		
+		
+		public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType) {
+			
+			List<AdminProfile> userprofile = null;
+			int adminid =adminId;
+			
+			userprofile = adminProfileRepository.findById(adminid);
+			
+			
+			CardCategory cardCategory= new CardCategory();
+			String fileName = StringUtils
+					.cleanPath(String.valueOf(adminId) + System.currentTimeMillis() + getFileExtension(file));
+			String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+					.path("/downloadFile/")
+					.path(String.valueOf(fileName))
+					.toUriString();
+			
+			try {
+				if (fileName.contains("..")) {
+					throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+				}
+				
+				
+						if (!userprofile.isEmpty()) {
+							
+							if (!userprofile.isEmpty()) {
+								cardCategory.setCategoryName(categoryName);
+								cardCategory.setCreatedDate(dateUtil.getDate());
+								cardCategory.setCategoryType(categoryType);			
+								cardCategory.setFilePath(fileDownloadUri);
+								cardCategory.setProfile(userprofile.get(0));
+								userprofile.get(0).getCardCategories().add(cardCategory);
+								Path targetLocation = this.fileStorageLocation.resolve(fileName);
+								Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+								return adminProfileRepository.save(userprofile.get(0));
+								
+							}else {
+								
+								return null;
+							}
+							
+						}else {
+						
+						return null;
+						
+						}
+					} catch (IOException ex) {
+					
+						throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+				
+					}
 		}
 
 }
