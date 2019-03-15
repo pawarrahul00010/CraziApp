@@ -70,6 +70,9 @@ public class MediaFiles implements Serializable{
 	
 	@Column(name = "is_Liked")
 	private Boolean isLiked;
+
+	@Column(name = "theam_name")
+	private String theamName;
 	
 	@Column(name = "is_Rated")
 	private Boolean isRated;
@@ -275,6 +278,23 @@ public class MediaFiles implements Serializable{
 	 */
 	public void setPendoraBox(PendoraBox pendoraBox) {
 		this.pendoraBox = pendoraBox;
+	}
+	
+	
+
+	
+	/**
+	 * @return the theamName
+	 */
+	public String getTheamName() {
+		return theamName;
+	}
+
+	/**
+	 * @param theamName the theamName to set
+	 */
+	public void setTheamName(String theamName) {
+		this.theamName = theamName;
 	}
 
 	@Override

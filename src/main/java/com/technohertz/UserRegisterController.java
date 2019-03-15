@@ -20,21 +20,19 @@ import org.springframework.web.bind.annotation.RestController;
 import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Biometric;
 import com.technohertz.model.Empty;
-import com.technohertz.model.GetVideos;
 import com.technohertz.model.MediaFiles;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserOtp;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
+import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IGroupProfileService;
 import com.technohertz.service.IMediaFileService;
-import com.technohertz.service.IUserProfileService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GetProfile;
 import com.technohertz.util.GetProfiles;
-import com.technohertz.util.ListGetProfiles;
 import com.technohertz.util.OtpUtil;
 import com.technohertz.util.ResponseObject;
 import com.technohertz.util.sendSMS;
@@ -45,9 +43,6 @@ public class UserRegisterController {
 
 	@Autowired
 	private IUserRegisterService userRegisterService;
-
-	@Autowired
-	private IUserProfileService userProfileService;
 	
 	@Autowired
 	private IMediaFileService mediaFileService;
@@ -61,6 +56,9 @@ public class UserRegisterController {
 	@Autowired
 	private IGroupProfileService groupProfileService;
 
+	@Autowired
+	UserRegisterRepository userRegisterRepository; 
+	
 	@Autowired
 	private EntityManager entitymanager;
 
@@ -622,5 +620,73 @@ public class UserRegisterController {
 						
 			}
 		}
+	
+	
+	
+	
+	
+
+	@PostMapping("/swithmobilenumber")
+	public ResponseEntity<ResponseObject> swithMobileNumber(
+			@RequestParam(value = "oldMobileNumber", required = false) String oldMobileNumber,
+			@RequestParam(value = "newMobileNumber", required = false) String newMobileNumber) throws ResourceNotFoundException {
+
+		if (oldMobileNumber == null) {
+
+			response.setError("1");
+			response.setMessage("'old mobile number' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+
+			return ResponseEntity.ok(response);
+
+		} else if (newMobileNumber == null) {
+
+			response.setError("1");
+			response.setMessage("'profileid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+
+			return ResponseEntity.ok(response);
+
+		} else {
+
+			Long mobileNumber = 0l;
+			try {
+				mobileNumber = Long.parseLong(oldMobileNumber);
+			} catch (NumberFormatException e) {
+
+				response.setError("1");
+				response.setMessage("wrong MobileNumber please enter numeric value");
+				response.setData(empty);
+				response.setStatus("FAIL");
+				return ResponseEntity.ok(response);
+
+			}
+
+			List<UserRegister> register = null;
+			UserRegister updateMobileNumber = null;
+			UserOtp userOtp =new UserOtp();
+			register = userRegisterRepository.findByMobileNumber(oldMobileNumber);
+			if (!register.isEmpty()) {
+				
+				register.get(0).setMobilNumber(newMobileNumber);
+				updateMobileNumber = userRegisterRepository.save(register.get(0));
+
+				response.setMessage("your Display name updated successfully");
+				response.setData("Your New Mobile number : "+newMobileNumber);
+				response.setError("");
+				response.setStatus("success");
+
+				return ResponseEntity.ok(response);
+			} else {
+				response.setMessage("user not available");
+				response.setData(empty);
+				response.setError("1");
+				response.setStatus("fail");
+				return ResponseEntity.ok(response);
+			}
+		}
+	}
 
 }

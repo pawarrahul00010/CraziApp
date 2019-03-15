@@ -81,7 +81,7 @@ public class FileController {
 	@PostMapping("/uploadFile")
     public ResponseEntity<ResponseObject> uploadFile(@RequestParam(value="file", required=false) MultipartFile file,
     		@RequestParam(value="fileType", required=false)String fileType,
-    		@RequestParam(value = "userId", required=false) Integer  userId) {
+    		@RequestParam(value = "userId", required=false) Integer  userId,@RequestParam(value = "themeName", required=false) String  themeName) {
      
     	if(file == null) {
 			response.setError("1");
@@ -110,7 +110,7 @@ public class FileController {
 			
 		}else {
 			
-    	UserProfile fileName = fileStorageService.storeFile(file, userId,fileType);
+    	UserProfile fileName = fileStorageService.storeFile(file, userId,fileType,themeName);
      
         if (fileName != null) {
 			Object obj = new UploadFileResponse(fileName.getFiles().get(fileName.getFiles().size() - 1).getFilePath(),
@@ -146,10 +146,11 @@ public class FileController {
     
     @PostMapping("/uploadMultipleFiles")
     public List<ResponseEntity<ResponseObject>> uploadMultipleFile(@RequestParam("files") MultipartFile[] files,@RequestParam("fileType")String fileType,
-    		@RequestParam(value = "userId") int  userId) {
+    		@RequestParam(value = "userId") int  userId,@RequestParam(value = "themeName") String  themeName) {
+    	
         return Arrays.asList(files)
                 .stream()
-                .map(file -> uploadFile(file,fileType,userId))
+                .map(file -> uploadFile(file,fileType,userId,themeName))
                 .collect(Collectors.toList());
     }
  

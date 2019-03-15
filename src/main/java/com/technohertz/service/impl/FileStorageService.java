@@ -130,7 +130,7 @@ public class FileStorageService {
 	}
 	
 
-	public UserProfile storeFile(MultipartFile file, int fromUserId,String fileType) {
+	public UserProfile storeFile(MultipartFile file, int fromUserId,String fileType,String themeName) {
 		
 			List<UserProfile> userprofile = null;
 			userprofile = userprofileRepo.findById(fromUserId);
@@ -148,6 +148,7 @@ public class FileStorageService {
 						MediaFiles mediaFile = new MediaFiles();
 						mediaFile.setFilePath(fileDownloadUri);
 						mediaFile.setFileType(fileType);
+						mediaFile.setTheamName(themeName);
 						mediaFile.setIsLiked(false);
 						mediaFile.setLikes(0l);
 						mediaFile.setViewer(0l);
