@@ -74,6 +74,12 @@ public class MediaFiles implements Serializable{
 	@Column(name = "is_Rated")
 	private Boolean isRated;
 	
+	
+	@JsonIgnore
+	@ManyToOne(cascade=CascadeType.ALL)
+	@JoinColumn(name ="pendora_id")
+	private PendoraBox pendoraBox;
+	
 	@JsonIgnore
 	@ManyToOne(cascade=CascadeType.ALL)
 	@JoinColumn(name ="USR_DET_ID")
@@ -255,6 +261,20 @@ public class MediaFiles implements Serializable{
 
 	public void setViewer(Long viewer) {
 		this.viewer = viewer;
+	}
+
+	/**
+	 * @return the pendoraBox
+	 */
+	public PendoraBox getPendoraBox() {
+		return pendoraBox;
+	}
+
+	/**
+	 * @param pendoraBox the pendoraBox to set
+	 */
+	public void setPendoraBox(PendoraBox pendoraBox) {
+		this.pendoraBox = pendoraBox;
 	}
 
 	@Override

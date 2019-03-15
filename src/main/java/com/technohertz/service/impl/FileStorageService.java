@@ -27,10 +27,12 @@ import com.technohertz.exception.MyFileNotFoundException;
 import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
+import com.technohertz.model.PendoraBox;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
 import com.technohertz.repo.GroupProfileRepository;
+import com.technohertz.repo.PendoraBoxRepo;
 import com.technohertz.repo.UserContactRepository;
 import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.service.IUserContactService;
@@ -53,6 +55,9 @@ public class FileStorageService {
 	
 	@Autowired
 	private IUserRegisterService userRegisterService; 
+	
+	@Autowired
+	private PendoraBoxRepo pendoraBoxRepo;
 
 	
 	@Autowired
@@ -503,4 +508,70 @@ public class FileStorageService {
 				.setParameter("typeId", likedUsers.getTypeId())
 				.executeUpdate(); 
 		}
+		public UserProfile savePendoraBox(MultipartFile file, int userId, String message) {
+
+		List<UserProfile> userprofile = null;
+		MediaFiles mfile = new MediaFiles();
+
+		userprofile = userprofileRepo.findById(userId);
+
+		if (!userprofile.isEmpty()) {
+
+			PendoraBox box = new PendoraBox();
+			if (file!=null) {
+				String fileName = StringUtils
+						.cleanPath(String.valueOf(userId) + System.currentTimeMillis() + getFileExtension(file));
+
+				String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
+						.path(String.valueOf(String.valueOf(fileName))).toUriString();
+				try {
+					if (fileName.contains("..")) {
+						throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+					}
+					mfile.setFilePath(fileDownloadUri);
+					mfile.setIsLiked(false);
+					mfile.setIsRated(false);
+					mfile.setLikes(0l);
+					mfile.setViewer(0l);
+					mfile.setRating(0.0f);
+					mfile.setIsBookMarked(false);
+					mfile.setCreateDate(dateUtil.getDate());
+					mfile.setLastModifiedDate(dateUtil.getDate());
+					mfile.setFileType("PENDORA");
+					box.setMessageOrFile(fileDownloadUri);
+					box.getFiles().add(mfile);
+
+					Path targetLocation = this.fileStorageLocation.resolve(fileName);
+					Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+					userprofile.get(0).getPendoraBox().add(box);
+					return userprofileRepo.save(userprofile.get(0));
+				} 
+				catch (IOException ex) {
+					throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+				
+				}
+			} 
+			else {
+				box.setMessageOrFile(message);
+				userprofile.get(0).getPendoraBox().add(box);
+				return userprofileRepo.save(userprofile.get(0));
+			}
+		}
+		return userprofile.get(0);
+	}
+		public List<PendoraBox> getMessagesById(String userId) {
+			
+			List<PendoraBox> pendoraBoxs= pendoraBoxRepo.findAll();
+		return pendoraBoxs;
+		}
+		@Transactional
+		public int deleteMessagesById(String userId) {
+			
+			int user=entityManager.createNativeQuery("delete p from pendora_box p where p.usr_det_id=:userId").setParameter("userId",userId).executeUpdate();
+			
+			int userid= entityManager.createNativeQuery("delete p,m from pendora_box p INNER JOIN media_files m ON p.pendora_id=m.pendora_id where p.usr_det_id=:userId").setParameter("userId",userId).executeUpdate();
+		return userid;
+			//delete r,u,o,b from User_Register r INNER JOIN User_Profile u on r.userid=u.USR_DET_ID INNER JOIN user_otp o on r.userid=o.otp_id INNER JOIN biometric_table b ON r.userid=b.biometric_id where userid=:userId
+		}
+
 }
