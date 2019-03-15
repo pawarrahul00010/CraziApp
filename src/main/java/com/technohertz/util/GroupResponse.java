@@ -20,6 +20,8 @@ public class GroupResponse {
 
 	
 	private Object groupMember;
+	
+	private Object groupAdminList;
 
 
 	public Integer getGroupId() {
@@ -92,12 +94,23 @@ public class GroupResponse {
 	}
 
 
+	public Object getGroupAdminList() {
+		return groupAdminList;
+	}
+
+
+	public void setGroupAdminList(Object groupAdmin) {
+		this.groupAdminList = groupAdmin;
+	}
+
+
 	@Override
 	public String toString() {
 		return "GroupResponse [groupId=" + groupId + ", displayName=" + displayName + ", createdBy=" + createdBy
 				+ ", currentProfile=" + currentProfile + ", aboutGroup=" + aboutGroup + ", files=" + files
-				+ ", groupMember=" + groupMember + "]";
+				+ ", groupMember=" + groupMember + ", groupAdminList=" + groupAdminList + "]";
 	}
+
 	
 	
 }

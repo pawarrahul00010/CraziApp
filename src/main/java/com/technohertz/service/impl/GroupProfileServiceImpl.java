@@ -100,16 +100,29 @@ public class GroupProfileServiceImpl implements IGroupProfileService{
 
 	@Transactional
 	@Override
-	public void deleteContactsById(Integer groupId, String contactList) {
+	public void deleteContactsById(Integer groupId, String contactidList) {
 		
-		contactList.replace("[", "(");
-		contactList.replace("]", ")");
-		System.out.println(contactList);
+		contactidList.replace("[", "(");
+		contactidList.replace("]", ")");
+		System.out.println(contactidList);
 		entityManager.createNativeQuery(" DELETE FROM " + 
-				" group_profile_group_member WHERE group_id=:group_id AND contact_id IN (:contactList)")
+				" group_profile_group_member WHERE group_id=:group_id AND contact_id IN (:contactidList)")
 				.setParameter("group_id", groupId)
-				.setParameter("contactList", contactList).executeUpdate();
+				.setParameter("contactidList", contactidList).executeUpdate();
 
+	}
+
+	@Override
+	public void deleteAdminFromGroupByContactId(Integer contactId) {
+
+		entityManager.createQuery("delete from GroupAdmin where contactId=:contactId").setParameter("contactId", contactId).executeUpdate();
+	}
+
+	@Override
+	public void deleteGroupById(Integer groupId) {
+		
+		groupProfileRepository.deleteById(groupId);
+		
 	}
 
 }

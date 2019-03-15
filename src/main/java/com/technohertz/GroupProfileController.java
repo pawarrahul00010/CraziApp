@@ -1,8 +1,10 @@
 package com.technohertz;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.technohertz.common.Constant;
 import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Empty;
+import com.technohertz.model.GroupAdmin;
 import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
@@ -30,6 +33,7 @@ import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IGroupProfileService;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.IUserContactService;
+import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GroupResponse;
@@ -44,6 +48,9 @@ public class GroupProfileController {
 
 	@Autowired
 	private GroupResponse groupResponse;
+	
+	@Autowired
+	private IUserRegisterService userRegisterService;
 	
 	@Autowired
 	private IGroupProfileService groupProfileService;
@@ -144,6 +151,23 @@ public class GroupProfileController {
 			groupProfile.setCurrentProfile(mediaFiles.getCurrentProfile());
 			groupProfile.setDisplayName(groupName);
 			groupProfile.setCreatedBy(userId);
+			
+			
+			Set<GroupAdmin> adminList = new HashSet<GroupAdmin>();
+			List<UserRegister> userList = userRegisterService.getById(userId);
+			if(!userList.isEmpty()) {
+				
+				//if(groupProfile.getAdminSet().contains(contactProfileList.get(userList.get(0).getMobilNumber()))) {
+					
+					GroupAdmin groupAdmin = new GroupAdmin();
+					groupAdmin.setContactId(contactProfileList.get(userList.get(0).getMobilNumber()).getContactId());
+					
+					adminList.add(groupAdmin);
+					groupProfile.setAdminSet(adminList);
+				//}
+			}
+
+			
 			groupProfileService.save(groupProfile);
 
 			groupResponse.setGroupId(groupProfile.getGroupId());
@@ -153,6 +177,7 @@ public class GroupProfileController {
 			groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
 			groupResponse.setDisplayName(groupProfile.getDisplayName());
 			groupResponse.setFiles(groupProfile.getFiles());
+			groupResponse.setGroupAdminList(groupProfile.getAdminSet());
 
 			response.setStatus("Success");
 			response.setMessage("Group Created successfully");
@@ -164,15 +189,27 @@ public class GroupProfileController {
 		}
 
 	}
+	
 
-	@PostMapping("/update/contact")
-	public ResponseEntity<ResponseObject> updateGroup(@RequestParam(value ="contactList", required=false) String contacts,
+	@PostMapping("/make/admin")
+	public ResponseEntity<ResponseObject> updateGroupAdmin(@RequestParam(value ="contactId", required=false) Integer contactId,
+			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
 			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
-		if(contacts == null ) {
+		if(adminContactId == null ) {
 			
 			response.setError("1");
-			response.setMessage("'contactList' is empty or null please check");
+			response.setMessage("'adminContactId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if(contactId == null ) {
+			
+			response.setError("1");
+			response.setMessage("'contactId' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -190,41 +227,258 @@ public class GroupProfileController {
 
 		}else {
 
-			List<UserContact> retrivedContactList = userContactService.getAll();// get all user from database
 
-			List<String> contactList = getContactList(contacts);
+			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupId);//get group details
 
-			Map<String, UserContact> contactProfileList = commonUtil.getContactProfileDetails(contactList,
-					retrivedContactList);
-
-			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupId);
-
-			List<String> conlist = groupProfileService.getGroupContactListById(groupId);
+			//List<String> conlist = groupProfileService.getGroupContactListById(groupId);//list of mobile no.
 
 			GroupProfile groupProfile = getGroupUserList.get(0);
+			
+			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			
+			if(adminList.contains(adminContactId)) {
+				
+				for(UserContact userContact : groupProfile.getGroupMember()) {
+					
+					if(userContact.getContactId() == contactId || contactId.equals(userContact.getContactId())) {
+						
+						GroupAdmin groupAdmin = new GroupAdmin();
+						groupAdmin.setContactId(contactId);
+			
+						groupProfile.getAdminSet().add(groupAdmin);
+					}
+				}
+				
+				groupProfileService.save(groupProfile);
 
-			List<UserContact> contactlist = getContactListTosave(contactList, conlist, contactProfileList,
-					groupProfile);
+				groupResponse.setGroupId(groupProfile.getGroupId());
+				groupResponse.setGroupMember(groupProfile.getGroupMember());
+				groupResponse.setAboutGroup(groupProfile.getAboutGroup());
+				groupResponse.setCreatedBy(groupProfile.getCreatedBy());
+				groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
+				groupResponse.setDisplayName(groupProfile.getDisplayName());
+				groupResponse.setFiles(groupProfile.getFiles());
+				groupResponse.setGroupAdminList(groupProfile.getAdminSet());
 
-			groupProfile.setGroupMember(contactlist);
-			groupProfile.setGroupId(groupId);
+				response.setStatus("Success");
+				response.setMessage("Contact made as admin successfully");
+				response.setError("0");
+				response.setData(groupResponse);
 
-			groupProfileService.save(groupProfile);
+				return ResponseEntity.ok(response);
+				
+			}else {
+				
+				response.setStatus("Fail");
+				response.setMessage("Sorry You are not a admin please be admin first.");
+				response.setError("0");
+				response.setData(empty);
 
-			groupResponse.setGroupId(groupProfile.getGroupId());
-			groupResponse.setGroupMember(groupProfile.getGroupMember());
-			groupResponse.setAboutGroup(groupProfile.getAboutGroup());
-			groupResponse.setCreatedBy(groupProfile.getCreatedBy());
-			groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
-			groupResponse.setDisplayName(groupProfile.getDisplayName());
-			groupResponse.setFiles(groupProfile.getFiles());
+				return ResponseEntity.ok(response);
+				
+			}
 
-			response.setStatus("Success");
-			response.setMessage("Contact added in Group successfully");
-			response.setError("0");
-			response.setData(groupResponse);
+
+		}
+
+	}
+
+	private List<Integer> getAdminList(Set<GroupAdmin> adminSet) {
+
+		List<Integer> adminList = new ArrayList<Integer>();
+		for(GroupAdmin groupAdmin : adminSet) {
+			
+			adminList.add(groupAdmin.getContactId());
+		}
+		return adminList;
+	}
+
+	@PostMapping("/update/contact")
+	public ResponseEntity<ResponseObject> updateGroup(@RequestParam(value ="contactNumber", required=false) String contact,
+			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
+			@RequestParam(value ="groupId", required=false) Integer groupId) {
+
+
+		if(adminContactId == null ) {
+			
+			response.setError("1");
+			response.setMessage("'adminContactId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if(contact == null ) {
+			
+			response.setError("1");
+			response.setMessage("'contactid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (groupId == null) {
+
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else {
+			
+			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupId);//get group details
+
+			//List<String> conlist = groupProfileService.getGroupContactListById(groupId);//list of mobile no.
+
+			GroupProfile groupProfile = getGroupUserList.get(0);
+			List<String> contactsList = getContactsList(groupProfile.getGroupMember());//exist contact list
+			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			
+			if(adminList.contains(adminContactId)) {
+				
+				if(!contactsList.contains(contact)) {
+				
+					List<UserContact> retrivedContactList = userContactService.getAll();// get all user from database
+		
+					List<String> contactList = getContactList(contact);
+		
+					Map<String, UserContact> contactProfileList = commonUtil.getContactProfileDetails(contactList,
+							retrivedContactList);
+		
+					List<String> conlist = groupProfileService.getGroupContactListById(groupId);
+		
+					List<UserContact> contactlist = getContactListTosave(contactList, conlist, contactProfileList,
+							groupProfile);
+		
+					groupProfile.setGroupMember(contactlist);
+					groupProfile.setGroupId(groupId);
+		
+					groupProfileService.save(groupProfile);
+		
+					groupResponse.setGroupId(groupProfile.getGroupId());
+					groupResponse.setGroupMember(groupProfile.getGroupMember());
+					groupResponse.setAboutGroup(groupProfile.getAboutGroup());
+					groupResponse.setCreatedBy(groupProfile.getCreatedBy());
+					groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
+					groupResponse.setDisplayName(groupProfile.getDisplayName());
+					groupResponse.setFiles(groupProfile.getFiles());
+					groupResponse.setGroupAdminList(groupProfile.getAdminSet());
+		
+					response.setStatus("Success");
+					response.setMessage("Contact added in Group successfully");
+					response.setError("0");
+					response.setData(groupResponse);
+		
+					return ResponseEntity.ok(response);
+	
+			}else {
+				response.setStatus("Fail");
+				response.setMessage("Sorry contact already exist.");
+				response.setError("1");
+				response.setData(empty);
+
+				return ResponseEntity.ok(response);
+			}
+		}else {
+			response.setStatus("Fail");
+			response.setMessage("Sorry You are not a admin please be admin first.");
+			response.setError("1");
+			response.setData(empty);
 
 			return ResponseEntity.ok(response);
+		}
+	}
+	}
+	private List<String> getContactsList(List<UserContact> groupMember) {
+
+		List<String> contactList = new ArrayList<String>();
+		for(UserContact userContact : groupMember) {
+			contactList.add(userContact.getContactNumber());
+		}
+		return contactList;
+	}
+
+
+	@PostMapping("/make/normal")
+	public ResponseEntity<ResponseObject> makeNormalUser(@RequestParam(value ="contactId", required=false) Integer contactId,
+			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
+			@RequestParam(value ="groupId", required=false) Integer groupId) {
+
+		if(adminContactId == null ) {
+			
+			response.setError("1");
+			response.setMessage("'adminContactId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if(contactId == null ) {
+			
+			response.setError("1");
+			response.setMessage("'contactId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (groupId == null) {
+
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else {
+
+
+			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupId);//get group details
+
+			//List<String> conlist = groupProfileService.getGroupContactListById(groupId);//list of mobile no.
+
+			GroupProfile groupProfile = getGroupUserList.get(0);
+			
+			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			
+			if(adminList.contains(adminContactId)) {
+				
+				groupProfileService.deleteAdminFromGroupByContactId(contactId);
+				
+				groupResponse.setGroupId(groupProfile.getGroupId());
+				groupResponse.setGroupMember(groupProfile.getGroupMember());
+				groupResponse.setAboutGroup(groupProfile.getAboutGroup());
+				groupResponse.setCreatedBy(groupProfile.getCreatedBy());
+				groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
+				groupResponse.setDisplayName(groupProfile.getDisplayName());
+				groupResponse.setFiles(groupProfile.getFiles());
+				groupResponse.setGroupAdminList(groupProfile.getAdminSet());
+
+				response.setStatus("Success");
+				response.setMessage("Contact made as normal user successfully");
+				response.setError("0");
+				response.setData(groupResponse);
+
+				return ResponseEntity.ok(response);
+				
+			}else {
+				
+				response.setStatus("Fail");
+				response.setMessage("Sorry You are not a admin please be admin first.");
+				response.setError("0");
+				response.setData(empty);
+
+				return ResponseEntity.ok(response);
+				
+			}
+
 
 		}
 
@@ -247,13 +501,14 @@ public class GroupProfileController {
 	}
 
 	@PostMapping("/delete/contact")
-	public ResponseEntity<ResponseObject> deleteContactFromGroup(@RequestParam(value ="contactidList", required=false) String contacts,
-			@RequestParam(value ="groupId", required=false) String groupId) {
+	public ResponseEntity<ResponseObject> deleteContactFromGroup(@RequestParam(value ="contactid", required=false) Integer contactid,
+			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
+			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
-		if(contacts == null ) {
+		if(contactid == null ) {
 			
 			response.setError("1");
-			response.setMessage("'contactidList' is empty or null please check");
+			response.setMessage("'contactid' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -271,24 +526,126 @@ public class GroupProfileController {
 
 		}else {
 
-			int groupid;
-			try {
-				groupid = Integer.parseInt(groupId);
-			} catch (NumberFormatException e) {
+			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupId);//get group details
 
-				response.setError("1");
-				response.setMessage("wrong contactList and groupId please enter correct value");
-				response.setData(empty);
-				response.setStatus("FAIL");
-				return ResponseEntity.ok(response);
-			}
-
-			groupProfileService.deleteContactsById(groupid, contacts);
-
-			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupid);
+			//List<String> conlist = groupProfileService.getGroupContactListById(groupId);//list of mobile no.
 
 			GroupProfile groupProfile = getGroupUserList.get(0);
 
+			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			
+			if(adminList.contains(adminContactId)) {
+				if(adminList.contains(contactid)) {
+					
+					groupProfileService.deleteAdminFromGroupByContactId(contactid);
+				}
+				
+				groupProfileService.deleteContactsById(groupId, String.valueOf(contactid));
+	
+				groupResponse.setGroupId(groupProfile.getGroupId());
+				groupResponse.setGroupMember(groupProfile.getGroupMember());
+				groupResponse.setAboutGroup(groupProfile.getAboutGroup());
+				groupResponse.setCreatedBy(groupProfile.getCreatedBy());
+				groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
+				groupResponse.setDisplayName(groupProfile.getDisplayName());
+				groupResponse.setFiles(groupProfile.getFiles());
+				groupResponse.setGroupAdminList(groupProfile.getAdminSet());
+	
+				response.setStatus("Success");
+				response.setMessage("contact removed from Group successfully");
+				response.setError("0");
+				response.setData(groupResponse);
+	
+				return ResponseEntity.ok(response);
+
+			}else {
+	
+				response.setStatus("Fail");
+				response.setMessage("Sorry You are not a admin please be admin first.");
+				response.setError("0");
+				response.setData(empty);
+	
+				return ResponseEntity.ok(response);
+			}
+		}
+	}
+
+	@PostMapping("/leave/group")
+	public ResponseEntity<ResponseObject> leaveFromGroup(@RequestParam(value ="contactid", required=false) String contactid,
+			@RequestParam(value ="groupId", required=false) Integer groupId) {
+
+		if(contactid == null ) {
+			
+			response.setError("1");
+			response.setMessage("'contactid' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (groupId == null) {
+
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else {
+
+			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupId);//get group details
+
+			//List<String> conlist = groupProfileService.getGroupContactListById(groupId);//list of mobile no.
+
+			GroupProfile groupProfile = getGroupUserList.get(0);
+
+			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			int contactId = Integer.parseInt(contactid);
+			
+			if(adminList.contains(contactId)) {
+				
+				if(adminList.size()==1 ) {
+					
+					if(groupProfile.getGroupMember().size()==1) {
+						
+						groupProfileService.deleteGroupById(groupId);
+						groupProfileService.deleteAdminFromGroupByContactId(contactId);
+						
+						response.setStatus("Success");
+						response.setMessage("contact removed from Group successfully");
+						response.setError("0");
+						response.setData(empty);
+			
+						return ResponseEntity.ok(response);
+						
+					}
+					else {
+							
+						UserContact userContact = groupProfile.getGroupMember().get(0);
+							
+						GroupAdmin groupAdmin = new GroupAdmin();
+						groupAdmin.setContactId(userContact.getContactId());
+						
+						groupProfile.getAdminSet().add(groupAdmin);
+						groupProfileService.deleteContactsById(groupId, contactid);
+					
+					}
+				}
+				
+			}else{
+				UserContact userContact = groupProfile.getGroupMember().get(0);
+				
+				GroupAdmin groupAdmin = new GroupAdmin();
+				groupAdmin.setContactId(userContact.getContactId());
+				
+				groupProfile.getAdminSet().add(groupAdmin);
+				groupProfileService.deleteContactsById(groupId, contactid);
+				
+				
+			}
+			
 			groupResponse.setGroupId(groupProfile.getGroupId());
 			groupResponse.setGroupMember(groupProfile.getGroupMember());
 			groupResponse.setAboutGroup(groupProfile.getAboutGroup());
@@ -296,18 +653,17 @@ public class GroupProfileController {
 			groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
 			groupResponse.setDisplayName(groupProfile.getDisplayName());
 			groupResponse.setFiles(groupProfile.getFiles());
-
+			groupResponse.setGroupAdminList(groupProfile.getAdminSet());
+			
 			response.setStatus("Success");
 			response.setMessage("contact removed from Group successfully");
 			response.setError("0");
 			response.setData(groupResponse);
-
+			
 			return ResponseEntity.ok(response);
-
 		}
-
 	}
-
+	
 	@SuppressWarnings("unused")
 	@PostMapping("/displayName/{groupId}")
 	public ResponseEntity<ResponseObject> updateDisplayName(@RequestParam(value ="displayName", required=false) String displayName,
@@ -370,6 +726,7 @@ public class GroupProfileController {
 				groupResponse.setCurrentProfile(groupProfile.getCurrentProfile());
 				groupResponse.setDisplayName(groupProfile.getDisplayName());
 				groupResponse.setFiles(groupProfile.getFiles());
+				groupResponse.setGroupAdminList(groupProfile.getAdminSet());
 
 				response.setMessage("your Display name updated successfully");
 				response.setData(groupResponse);

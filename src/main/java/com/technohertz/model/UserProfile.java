@@ -51,6 +51,12 @@ public class UserProfile implements Serializable{
 	@JoinColumn(name="USR_DET_ID")
 	private List<MediaFiles> files=new ArrayList<MediaFiles>();
 
+
+	 @JsonIgnore
+	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)
+	@JoinColumn(name="USR_DET_ID")
+	private List<PendoraBox> pendoraBox=new ArrayList<PendoraBox>();
+	 
 	 @JsonIgnore
 	 @OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)
 	 @JoinColumn(name="USR_DET_ID")
@@ -138,6 +144,20 @@ public class UserProfile implements Serializable{
 	 */
 	public void setCreateDate(LocalDateTime createDate) {
 		this.createDate = createDate;
+	}
+
+	/**
+	 * @return the pendoraBox
+	 */
+	public List<PendoraBox> getPendoraBox() {
+		return pendoraBox;
+	}
+
+	/**
+	 * @param pendoraBox the pendoraBox to set
+	 */
+	public void setPendoraBox(List<PendoraBox> pendoraBox) {
+		this.pendoraBox = pendoraBox;
 	}
 
 	

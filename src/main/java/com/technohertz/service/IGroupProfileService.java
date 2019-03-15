@@ -21,4 +21,8 @@ public interface IGroupProfileService {
 
 	public void deleteContactsById(Integer groupId, String contacts);
 
+	public void deleteAdminFromGroupByContactId(Integer contactId);
+
+	public void deleteGroupById(Integer groupId);
+
 }
