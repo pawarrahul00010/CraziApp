@@ -290,7 +290,6 @@ public class AdminRegisterController {
     @SuppressWarnings("unused")
 	@PostMapping("/uploadCard")
     public ResponseEntity<ResponseObject> uploadCards(@RequestParam(value="file", required=false) MultipartFile file,
-    		@RequestParam(value="fileType", required=false)String fileType,
     		@RequestParam(value = "categoryId", required=false) Integer  categoryId,
     		@RequestParam(value = "cardText", required=false) String cardText) {
      
@@ -303,15 +302,7 @@ public class AdminRegisterController {
 			return ResponseEntity.ok(response);
 			
 		}
-		else if(fileType == null) {
-			response.setError("1");
-			response.setMessage("'fileType' is empty or null please check");
-			response.setData(empty);
-			response.setStatus("FAIL");
-			
-			return ResponseEntity.ok(response);
-			
-		}else if(cardText == null) {
+    	else if(cardText == null) {
 			response.setError("1");
 			response.setMessage("'cardText' is empty or null please check");
 			response.setData(empty);
@@ -352,7 +343,7 @@ public class AdminRegisterController {
 				return ResponseEntity.ok(response);
 			} 
 		}else {
-			response.setMessage("User does not exist please register first");
+			response.setMessage("Category does not exist please add first");
 
 			response.setData(empty);
 			response.setError("1");

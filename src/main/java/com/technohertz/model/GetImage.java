@@ -1,41 +1,35 @@
 package com.technohertz.model;
 
+import java.time.LocalDateTime;
+
 public class GetImage {
 
 
 private String user;
-private int fileId;
-/**
- * @return the user
- */
+private Integer fileId;
+private LocalDateTime createDate;
 public String getUser() {
 	return user;
 }
-
-/**
- * @param user the user to set
- */
 public void setUser(String user) {
 	this.user = user;
 }
-
-/**
- * @return the userId
- */
-public int getfileId() {
+public Integer getFileId() {
 	return fileId;
 }
-
-/**
- * @param userId the userId to set
- */
-public void setfileId(int fileId) {
+public void setFileId(Integer fileId) {
 	this.fileId = fileId;
 }
-
-
-
-
+public LocalDateTime getCreateDate() {
+	return createDate;
+}
+public void setCreateDate(LocalDateTime createDate) {
+	this.createDate = createDate;
+}
+@Override
+public String toString() {
+	return "GetImage [user=" + user + ", fileId=" + fileId + ", createDate=" + createDate + "]";
+}
 
 
 }

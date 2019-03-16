@@ -445,10 +445,9 @@ public class FileStorageService {
 				.getResultList();
 	}
 	
-	public List<Cards> getAllGreetings(Integer themeId, String cardType) {
-		return entityManager.createQuery("from Cards c where c.fileType=:cardType and c.theme=:themeId ORDER BY CardId  DESC",Cards.class)
-				.setParameter("cardType", cardType)
-				.setParameter("themeId", themeId)
+	public List<CardCategory> getAllCategories(String categoryType) {
+		return entityManager.createQuery("from CardCategory where categoryType=:categoryType ORDER BY categoryId  DESC",CardCategory.class)
+				.setParameter("categoryType", categoryType)
 				.getResultList();
 	}
 
@@ -679,6 +678,12 @@ public class FileStorageService {
 						throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
 				
 					}
+		}
+		public List<CardCategory> getAllGreetinsByCategoryId(Integer categoryId) {
+			return entityManager.createQuery("from CardCategory where categoryId=:categoryId",CardCategory.class)
+					.setParameter("categoryId", categoryId)
+					.getResultList();
+			
 		}
 
 }

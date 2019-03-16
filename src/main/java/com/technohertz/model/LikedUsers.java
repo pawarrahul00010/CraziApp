@@ -1,6 +1,7 @@
 package com.technohertz.model;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -39,6 +40,10 @@ public class LikedUsers {
 	@ColumnDefault("0")
 	@Column(name = "rating")
 	private Float rating;
+	
+	@Column(name = "CREATE_DATE")
+	private LocalDateTime createDate;
+
 
 	public String getUserName() {
 		return userName;
@@ -99,13 +104,18 @@ public class LikedUsers {
 	public void setRating(Float rating) {
 		this.rating = rating;
 	}
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
-	 */
+	
+	public LocalDateTime getCreateDate() {
+		return createDate;
+	}
+	public void setCreateDate(LocalDateTime createDate) {
+		this.createDate = createDate;
+	}
 	@Override
 	public String toString() {
 		return "LikedUsers [typeId=" + typeId + ", userName=" + userName + ", markType=" + markType + ", userId="
-				+ userId + ", rating=" + rating + "]";
+				+ userId + ", rating=" + rating + ", createDate=" + createDate + "]";
 	}
+	
 
 }

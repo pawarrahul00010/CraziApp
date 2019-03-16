@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.technohertz.common.Constant;
+import com.technohertz.model.CardBookmarkUsers;
+import com.technohertz.model.CardCategory;
 import com.technohertz.model.Cards;
 import com.technohertz.model.Empty;
 import com.technohertz.model.GetImage;
@@ -38,16 +40,22 @@ import com.technohertz.payload.UploadFileResponse;
 import com.technohertz.repo.MediaFileRepo;
 import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.repo.UserRegisterRepository;
+import com.technohertz.service.ICardService;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
+import com.technohertz.util.DateUtil;
 import com.technohertz.util.ResponseObject;
 
 @RestController
 public class FileController {
 	@Autowired
 	private Empty empty;
+	
+	@Autowired
+	private DateUtil dateUtil;
+
 
 	@Autowired
 	private UserProfileRepository userProfileRepository;
@@ -55,6 +63,9 @@ public class FileController {
     
 	@Autowired
 	private MediaFileRepo mediaFileRepo;
+	
+	@Autowired
+	private ICardService cardService;
 	
 	@Autowired
 	private IMediaFileService mediaFileService;
@@ -418,6 +429,7 @@ public class FileController {
 			LikedUsers likedUsers = new LikedUsers();
 			likedUsers.setUserName(userRegister.getUserName());
 			likedUsers.setMarkType(Constant.BOOKMARK);
+			likedUsers.setCreateDate(dateUtil.getDate());
 			likedUsers.setUserId(userId);
 			likedUsers.setRating(0.0f);
 			mediaFiles.setIsBookMarked(true);
@@ -444,6 +456,7 @@ public class FileController {
 	
 		}
 	}
+	
 	@PostMapping("/getbookmark")
 	public ResponseEntity<ResponseObject> getBookmarked(@RequestParam(value = "userId", required = false) Integer  userId) {
 
@@ -474,7 +487,15 @@ public class FileController {
 			for(MediaFiles mediaFiles :mediaFilesList) {
 				GetImage img = new GetImage();
 				img.setUser(mediaFiles.getFilePath());
-				img.setfileId(mediaFiles.getFileId());
+				
+				for(LikedUsers likedUsers:mediaFiles.getLikedUsers()) {
+					if((likedUsers.getUserId()==userId || userId.equals(likedUsers.getUserId())) && ("BOOKMARKED".equals(likedUsers.getMarkType()) || likedUsers.getMarkType()=="BOOKMARKED")) {
+						
+						img.setCreateDate(likedUsers.getCreateDate());
+					}
+				}
+				
+				img.setFileId(mediaFiles.getFileId());
 				image.add(img);
 				
 			}
@@ -685,22 +706,12 @@ public class FileController {
 	
     }
 	@PostMapping("/getAllGreet")
-	public ResponseEntity<ResponseObject> getAllGreetingByThemeId(
-    		@RequestParam(value = "themeId", required = false) Integer  themeId,
-    		@RequestParam(value = "cardType", required = false) String  cardType) {
+	public ResponseEntity<ResponseObject> getAllGreetingByCategoryId(
+    		@RequestParam(value = "categoryId", required = false) Integer  categoryId) {
 		
-		if(themeId == null) {
+		if(categoryId == null) {
 			response.setError("1");
-			response.setMessage("'themeId' is empty or null please check");
-			response.setData(empty);
-			response.setStatus("FAIL");
-			
-			return ResponseEntity.ok(response);
-			
-		}
-    	else if(cardType == null) {
-			response.setError("1");
-			response.setMessage("'cardType' is empty or null please check");
+			response.setMessage("'categoryId' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -708,15 +719,161 @@ public class FileController {
 			
 		}
     	else {
-			List<Cards> cardList=fileStorageService.getAllGreetings(themeId, cardType);
+			List<CardCategory> cardList=fileStorageService.getAllGreetinsByCategoryId(categoryId);
 	
 			response.setError("0");	
 			response.setMessage("successfully fetched");
-			response.setData(cardList);
+			response.setData(cardList.get(0).getCards());
 			response.setStatus("SUCCESS");
 			return ResponseEntity.ok(response);
 			
 		}
 
+	}
+	
+	@PostMapping("/getAllCategory")
+	public ResponseEntity<ResponseObject> getAllCategory(@RequestParam(value = "categoryType", required = false) String  categoryType) {
+		
+
+		if(categoryType == null) {
+			response.setError("1");
+			response.setMessage("'categoryType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+    	else {
+	
+			List<CardCategory> CardCategoryList=fileStorageService.getAllCategories(categoryType);
+	
+			response.setError("0");	
+			response.setMessage("successfully fetched");
+			response.setData(CardCategoryList);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+    	}
+	}
+
+	
+	@PostMapping("/cardBookmark")
+	public ResponseEntity<ResponseObject> cardBookmarking(@RequestParam(value="cardId", required = false) Integer cardId,
+			@RequestParam(value = "userId", required = false) Integer  userId,
+			@RequestParam(value = "cardType", required = false) String  cardType) {
+		
+		if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}
+		else if(cardId == null) {
+			response.setError("1");
+			response.setMessage("'cardId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(cardType == null) {
+			response.setError("1");
+			response.setMessage("'cardType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+		
+			Cards cards= cardService.getById(cardId);
+		UserRegister userRegister = registerRepository.getOne(userId);
+		List<CardBookmarkUsers> cardBookmarkUsersList= cardService.getUserBookmarkByCardId(cardId, userId, cardType);
+
+		if(cardBookmarkUsersList.isEmpty()) {
+			
+			CardBookmarkUsers cardBookmarkUsers = new CardBookmarkUsers();
+			cardBookmarkUsers.setUserName(userRegister.getUserName());
+			cardBookmarkUsers.setCreateDate(dateUtil.getDate());
+			cardBookmarkUsers.setCardType(cardType);
+			cardBookmarkUsers.setUserId(userId);
+			cards.getCardBookmarkUserList().add(cardBookmarkUsers); 
+			cardService.save(cards);
+			
+			response.setError("0");
+			response.setMessage("user Bookmarked successfully");
+			response.setData(cards);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+		}
+		else {
+			
+			CardBookmarkUsers cardBookmarkUsers = cardBookmarkUsersList.get(0);
+			
+			response.setError("0");
+			response.setMessage("user already Bookmarked successfully");
+			response.setData(cardBookmarkUsers);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+			
+		}
+	
+		}
+	}
+	
+	@PostMapping("/getCardBookmark")
+	public ResponseEntity<ResponseObject> getCardBookmarks(@RequestParam(value = "userId", required = false) Integer  userId,
+			@RequestParam(value = "cardType", required = false) String  cardType) {
+
+		if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(cardType == null) {
+			response.setError("1");
+			response.setMessage("'cardType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+		List<Cards> cardsList= cardService.getCardBookmarksByUserId(userId, cardType);
+		
+		List<GetImage> image=new ArrayList<GetImage>();
+
+
+		if(cardsList.isEmpty()) {
+						
+			response.setError("0");
+			response.setMessage("user does not Bookmarked any cards");
+			response.setData(empty);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+		}
+		else {
+			
+				/*
+				 * for(Cards cards :cardsList) { GetImage img = new GetImage();
+				 * img.setUser(cards.getFilePath()); img.setfileId(cards.getFileId());
+				 * image.add(img);
+				 * 
+				 * }
+				 */
+			response.setError("0");	
+			response.setMessage("successfully fetched");
+			response.setData(cardsList);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+			
+		}
+		}
 	}
 }

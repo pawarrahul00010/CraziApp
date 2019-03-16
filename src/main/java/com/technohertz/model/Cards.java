@@ -2,20 +2,24 @@ package com.technohertz.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.DynamicUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @SuppressWarnings("serial")
 @Entity
@@ -40,76 +44,65 @@ public class Cards implements Serializable {
 	@ManyToOne(cascade=CascadeType.ALL)
 	@JoinColumn(name ="CATEGORY_ID")
 	private CardCategory cardCategory;
+	
+	
+	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)		
+	@JoinColumn(name="CARD_ID")
+	private List<CardBookmarkUsers> cardBookmarkUserList;
 
-	/**
-	 * @return the cardId
-	 */
 	public Integer getCardId() {
 		return CardId;
 	}
 
-	/**
-	 * @param cardId the cardId to set
-	 */
 	public void setCardId(Integer cardId) {
 		CardId = cardId;
 	}
 
-	/**
-	 * @return the cardText
-	 */
 	public String getCardText() {
 		return CardText;
 	}
 
-	/**
-	 * @param cardText the cardText to set
-	 */
 	public void setCardText(String cardText) {
 		CardText = cardText;
 	}
 
-
-	/**
-	 * @return the filePath
-	 */
 	public String getFilePath() {
 		return filePath;
 	}
 
-	/**
-	 * @param filePath the filePath to set
-	 */
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
 	}
 
-	/**
-	 * @return the modifiedDate
-	 */
 	public LocalDateTime getCreateDate() {
 		return createDate;
 	}
 
-	/**
-	 * @param modifiedDate the modifiedDate to set
-	 */
 	public void setCreateDate(LocalDateTime createDate) {
 		this.createDate = createDate;
 	}
 
-	/**
-	 * @return the profile
-	 */
 	public CardCategory getCardCategory() {
 		return cardCategory;
 	}
 
-	/**
-	 * @param profile the profile to set
-	 */
-	public void setCardCategory(CardCategory profile) {
-		this.cardCategory = profile;
+	public void setCardCategory(CardCategory cardCategory) {
+		this.cardCategory = cardCategory;
+	}
+
+	public List<CardBookmarkUsers> getCardBookmarkUserList() {
+		return cardBookmarkUserList;
+	}
+
+	public void setCardBookmarkUserList(List<CardBookmarkUsers> cardBookmarkUserList) {
+		this.cardBookmarkUserList = cardBookmarkUserList;
+	}
+
+	@Override
+	public String toString() {
+		return "Cards [CardId=" + CardId + ", CardText=" + CardText + ", filePath=" + filePath + ", createDate="
+				+ createDate + ", cardCategory=" + cardCategory + ", cardBookmarkUserList=" + cardBookmarkUserList
+				+ "]";
 	}
 
 

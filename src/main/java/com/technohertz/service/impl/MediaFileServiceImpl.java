@@ -70,7 +70,7 @@ public class MediaFileServiceImpl implements IMediaFileService{
 	@SuppressWarnings("unchecked")
 	@Override
 	public List<MediaFiles> getBookmarksByUserId(int userId) {
-		return entityManager.createNativeQuery("SELECT * FROM media_files WHERE file_id IN (SELECT file_id from liked_users where user_id=:userId and TYPE=:type) ",MediaFiles.class)
+		return entityManager.createNativeQuery("SELECT * FROM media_files WHERE file_id IN (SELECT file_id from liked_users where user_id=:userId and TYPE=:type order by create_date desc) ",MediaFiles.class)
 				.setParameter("type", Constant.BOOKMARK)
 				.setParameter("userId", userId).getResultList();
 	}

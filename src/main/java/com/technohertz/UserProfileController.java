@@ -87,7 +87,7 @@ public class UserProfileController {
 			for (MediaFiles mediaFiles : likedUsers) {
 				GetImage img = new GetImage();
 				img.setUser(mediaFiles.getFilePath());
-				img.setfileId(mediaFiles.getFileId());
+				img.setFileId(mediaFiles.getFileId());
 				image.add(img);
 			}
 
