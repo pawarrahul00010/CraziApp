@@ -604,6 +604,7 @@ public class FileController {
 				sharedMedia.setFormUser(fromUserId);
 				sharedMedia.setToUser(toUserId);
 				sharedMedia.setFileId(fileName.getFiles().get(fileName.getFiles().size() - 1).getFileId());
+				sharedMedia.setFileName(file.getOriginalFilename());
 				fileName.getMedia().add(sharedMedia);
 				userProfileRepository.save(fileName);
    				response.setMessage("your File is Shared successfully");

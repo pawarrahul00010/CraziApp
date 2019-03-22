@@ -18,6 +18,10 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.UserRecord.UpdateRequest;
 import com.technohertz.common.Constant;
 import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Empty;
@@ -147,6 +151,17 @@ public class UserProfileController {
 				profile.get(0).setProfileId(id);
 				updateDisplayName = userprofilerepo.save(profile.get(0));
 
+				try {
+					UpdateRequest request = new UpdateRequest(profileid)
+						    .setDisplayName(displayName);
+
+						UserRecord userRecord = FirebaseAuth.getInstance().updateUser(request);
+						System.out.println("Successfully updated user: " + userRecord.getUid());
+				} catch (FirebaseAuthException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+					
 				response.setMessage("your Display name updated successfully");
 				response.setData(updateDisplayName);
 				response.setError("");

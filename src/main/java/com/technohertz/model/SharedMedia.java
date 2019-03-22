@@ -37,6 +37,9 @@ public class SharedMedia implements Serializable{
 	@Column(name = "to_User")
 	private String toUser;
 	
+	@Column(name = "fileName")
+	private String fileName;
+	
 	@JsonIgnore
 	@ManyToOne(cascade=CascadeType.ALL)
 	@JoinColumn(name ="USR_DET_ID")
@@ -112,6 +115,14 @@ public class SharedMedia implements Serializable{
 	 @JsonIgnore
 	public void setProfile(UserProfile profile) {
 		this.profile = profile;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
 	}
 	
 	

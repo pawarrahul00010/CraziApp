@@ -38,10 +38,11 @@ public class CardServiceImpl implements ICardService {
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public List<CardBookmarkUsers> getUserBookmarkByCardId(Integer cardId, Integer userId, String cardType) {
 		
-			return entityManager.createQuery("FROM CardBookmarkUsers WHERE cardId=:cardId AND userId=:userId AND cardType=:cardType",CardBookmarkUsers.class)
+			return entityManager.createNativeQuery("select * FROM card_bookmark_users WHERE card_id=:cardId AND user_id=:userId AND card_type=:cardType",CardBookmarkUsers.class)
 					.setParameter("cardId", cardId)
 					.setParameter("cardType", cardType)
 					.setParameter("userId", userId).getResultList();

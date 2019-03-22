@@ -584,7 +584,7 @@ public class FileStorageService {
 		}
 		
 		
-		public CardCategory storeCards(MultipartFile file, Integer categoryId,String cardText) {
+		public CardCategory storeCards(MultipartFile file, Integer categoryId,String cardText, Character editable) {
 					
 				List<CardCategory> cardCategoryList = cardCategoryRepository.getById(categoryId);
 				
@@ -606,6 +606,7 @@ public class FileStorageService {
 								
 									cards.setFilePath(fileDownloadUri);
 									cards.setCreateDate(dateUtil.getDate());
+									cards.setEditable(editable);
 									cards.setCardCategory(cardCategoryList.get(0));
 									cards.setCardText(cardText);
 									

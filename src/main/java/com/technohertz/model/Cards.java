@@ -33,6 +33,9 @@ public class Cards implements Serializable {
 
 	@Column(name = "CARD_TEXT")
 	private String CardText;
+	
+	@Column(name = "EDITABLE")
+	private char editable;
 
 	@Column(name = "FILE_PATH")
 	private String filePath;
@@ -98,12 +101,19 @@ public class Cards implements Serializable {
 		this.cardBookmarkUserList = cardBookmarkUserList;
 	}
 
-	@Override
-	public String toString() {
-		return "Cards [CardId=" + CardId + ", CardText=" + CardText + ", filePath=" + filePath + ", createDate="
-				+ createDate + ", cardCategory=" + cardCategory + ", cardBookmarkUserList=" + cardBookmarkUserList
-				+ "]";
+	public char getEditable() {
+		return editable;
 	}
 
+	public void setEditable(char editable) {
+		this.editable = editable;
+	}
+
+	@Override
+	public String toString() {
+		return "Cards [CardId=" + CardId + ", CardText=" + CardText + ", editable=" + editable + ", filePath="
+				+ filePath + ", createDate=" + createDate + ", cardCategory=" + cardCategory + ", cardBookmarkUserList="
+				+ cardBookmarkUserList + "]";
+	}
 
 }

@@ -17,6 +17,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.auth.FirebaseAuthException;
+import com.google.firebase.auth.UserRecord;
+import com.google.firebase.auth.UserRecord.CreateRequest;
 import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Biometric;
 import com.technohertz.model.Empty;
@@ -392,6 +396,7 @@ public class UserRegisterController {
 				user.getBiometric().add(biometric);	
 				UserOtp userOtp = new UserOtp();
 				
+				
 				if(!userExists(mobileNumber) && !userNameExists(userName)){
 					
 					userOtp.setIs_active(true);
@@ -402,6 +407,23 @@ public class UserRegisterController {
 					user.setUserOtp(userOtp);
 		
 					userRegisterService.save(user);
+					
+					try {
+						CreateRequest request = new CreateRequest()
+								.setUid(user.getUserName())
+								.setPassword(user.getPassword())
+								.setPhoneNumber(user.getMobilNumber())
+								.setDisplayName(user.getUserName())
+								.setPhotoUrl("https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png")
+								.setDisabled(false);
+						
+						UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
+						System.out.println("Successfully created new user: " + userRecord.getUid());
+					} catch (FirebaseAuthException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					
 					
 					sms.sendSms(String.valueOf(mobileNumber), "Your CraziApp Registration is successful enter OTP to verify : "+OTP);
 					
@@ -424,6 +446,7 @@ public class UserRegisterController {
 			}
 		}
 		
+	
 
 		@Cacheable(value="mobileNumberCache",key="#mobileNumber",unless="#result==null")
 		private boolean userExists(String mobileNumber)

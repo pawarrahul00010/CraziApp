@@ -291,6 +291,7 @@ public class AdminRegisterController {
 	@PostMapping("/uploadCard")
     public ResponseEntity<ResponseObject> uploadCards(@RequestParam(value="file", required=false) MultipartFile file,
     		@RequestParam(value = "categoryId", required=false) Integer  categoryId,
+    		@RequestParam(value = "editable", required=false) Character  editable,
     		@RequestParam(value = "cardText", required=false) String cardText) {
      
     	if(file == null) {
@@ -320,7 +321,7 @@ public class AdminRegisterController {
 			
 		}else {
 			
-    	CardCategory cardCategory = fileStorageService.storeCards(file,categoryId,cardText);
+    	CardCategory cardCategory = fileStorageService.storeCards(file,categoryId,cardText, editable);
      
         if (cardCategory != null) {
 			Object obj = new UploadFileResponse(cardCategory.getCards().get(cardCategory.getCards().size()-1).getFilePath(),
