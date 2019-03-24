@@ -25,6 +25,7 @@ import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Biometric;
 import com.technohertz.model.Empty;
 import com.technohertz.model.MediaFiles;
+import com.technohertz.model.SecretConversation;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserOtp;
 import com.technohertz.model.UserProfile;
@@ -37,6 +38,7 @@ import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GetProfile;
 import com.technohertz.util.GetProfiles;
+import com.technohertz.util.LoginResponce;
 import com.technohertz.util.OtpUtil;
 import com.technohertz.util.ResponseObject;
 import com.technohertz.util.sendSMS;
@@ -204,21 +206,23 @@ public class UserRegisterController {
 				GetProfile getProfile = new GetProfile();
 				
 				getProfile.setUserId(userId);
-				
-				getProfile.setUser(userRegister.getUserName());
-				
+				getProfile.setUserName(userRegister.getUserName());
+				getProfile.setCraziId(userRegister.getUserName());
+				getProfile.setProfilePath(userRegister.getProfile().getCurrentProfile());
+				getProfile.setDisplayName(userRegister.getProfile().getDisplayName());
+				getProfile.setAbooutUser(userRegister.getProfile().getAboutUser());
 				getProfile.setGroupList(groupProfileService.getUserGroupdetailByUserId(userRegister.getMobilNumber()));
 				getProfile.setBookmarkList(mediaFileService.getBookmarksByUserId(userId));
-				List<MediaFiles> profileList = fileStorageService.getAllProfileById(userRegister.getProfile().getProfileId());
+				List<MediaFiles> profileList = fileStorageService.getAllProfileById(userId);
 				getProfile.setPhotos(mediaFileService.getAllProfileCountById(userId));
-				Float rating = commonUtil.getRating(profileList);
-				Long likes = commonUtil.getLikes(profileList);
+				Double rating = commonUtil.getRating(profileList);
 				
-				getProfile.setRating(rating);
+		       
+				Long likes = commonUtil.getLikes(profileList);
+				getProfile.setRating((rating));
 				getProfile.setLikes(likes);
 	//			getProfile.setUserProfile(userProfile);
 				getProfile.setProfileList(profileList);
-			
 			response.setMessage("your data is retrived successfully");
 			response.setData(getProfile);
 			response.setError("0");
@@ -241,7 +245,6 @@ public class UserRegisterController {
 	public ResponseEntity<ResponseObject> loginCredential(@RequestParam(value ="user", required=false) String user,
 			@RequestParam(value ="pass", required=false) String pass)
 			throws ResourceNotFoundException {
-		
 		if(user == null) {
 			
 			response.setError("1");
@@ -285,9 +288,10 @@ public class UserRegisterController {
 						String mobileNumber=userRegister.getMobilNumber();
 						String password = userRegister.getPassword();
 						Boolean userStatus=userRegister.getIsActive();
-			
+						int userID=userRegister.getUserId();
+						
 					
-					if (mobileNumber.equals(user)  && password.equals(pass) && userStatus==true) 
+					if (mobileNumber.equals(user)  && password.equals(pass) && userStatus.equals(true)) 
 					{
 						response.setStatus("SUCCESS");
 						response.setMessage("Logged in successfully");
@@ -309,8 +313,10 @@ public class UserRegisterController {
 						String name = userRegister.getUserName();
 						String password = userRegister.getPassword();
 						Boolean userStatus=userRegister.getIsActive();
-			
+						int userID=userRegister.getUserId();
+						
 					
+						
 					if (name.equals(user)  && password.equals(pass) && userStatus==true) 
 					{
 						response.setStatus("SUCCESS");

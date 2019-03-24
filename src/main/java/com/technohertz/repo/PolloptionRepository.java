@@ -6,14 +6,13 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import com.technohertz.model.GroupProfile;
+import com.technohertz.model.AdminProfile;
+import com.technohertz.model.PollLikes;
+import com.technohertz.model.PollOption;
 
 @Repository
-public interface GroupProfileRepository extends JpaRepository<GroupProfile, Integer>{
+public interface PolloptionRepository extends JpaRepository<PollOption, Integer>{
 
-	@Query("SELECT g from GroupProfile g where groupId=?1")
-	List<GroupProfile> findAllById(Integer groupId);
-
-	
 
 }
+

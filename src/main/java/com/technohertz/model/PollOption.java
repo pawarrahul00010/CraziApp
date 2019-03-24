@@ -34,8 +34,13 @@ public class PollOption implements Serializable {
 
 	@Column(name = "OPTION_NAME")
 	private String optionName;
+
+	@Column(name = "total_likes")
+	private Long totalLikes;
 	
-	@JsonIgnore
+	
+	
+
 	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "OPTION_ID")
 	private List<PollLikes> pollLikes = new ArrayList<PollLikes>();
@@ -56,12 +61,33 @@ public class PollOption implements Serializable {
 		this.optionName = optionName;
 	}
 
-	public List<PollLikes> getPollOptions() {
+	
+	/**
+	 * @return the totalLikes
+	 */
+	public Long getTotalLikes() {
+		return totalLikes;
+	}
+
+	/**
+	 * @param totalLikes the totalLikes to set
+	 */
+	public void setTotalLikes(Long totalLikes) {
+		this.totalLikes = totalLikes;
+	}
+
+	/**
+	 * @return the pollLikes
+	 */
+	public List<PollLikes> getPollLikes() {
 		return pollLikes;
 	}
 
-	public void setPollOptions(List<PollLikes> pollOptions) {
-		this.pollLikes = pollOptions;
+	/**
+	 * @param pollLikes the pollLikes to set
+	 */
+	public void setPollLikes(List<PollLikes> pollLikes) {
+		this.pollLikes = pollLikes;
 	}
 
 	@Override

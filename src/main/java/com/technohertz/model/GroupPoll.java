@@ -1,6 +1,7 @@
 package com.technohertz.model;
 
 import java.io.Serializable;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,8 +41,41 @@ public class GroupPoll implements Serializable {
 
 	@Column(name = "GROUP_ID")
 	private Integer groupId;
+	
+	@Column(name = "createDate", nullable = true)
+	private LocalDateTime createDate;
+	
+	@Column(name = "expiry_date", nullable = true, length = 200)
+	private LocalDateTime ExpiryDate;
 
-	@JsonIgnore
+	/**
+	 * @return the createDate
+	 */
+	public LocalDateTime getCreateDate() {
+		return createDate;
+	}
+
+	/**
+	 * @param createDate the createDate to set
+	 */
+	public void setCreateDate(LocalDateTime createDate) {
+		this.createDate = createDate;
+	}
+
+	/**
+	 * @return the expiryDate
+	 */
+	public LocalDateTime getExpiryDate() {
+		return ExpiryDate;
+	}
+
+	/**
+	 * @param expiryDate the expiryDate to set
+	 */
+	public void setExpiryDate(LocalDateTime expiryDate) {
+		ExpiryDate = expiryDate;
+	}
+
 	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "POLL_ID")
 	private List<PollOption> pollOptions = new ArrayList<PollOption>();

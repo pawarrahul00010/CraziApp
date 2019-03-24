@@ -26,10 +26,10 @@ public class PollLikes implements Serializable {
 	private Integer likeId;
 
 	@Column(name = "CONTACT_ID")
-	private String contactId;
+	private Integer contactId;
 	
 	@Column(name = "LIKE_STATUS")
-	private String likeStatus;
+	private Boolean likeStatus;
 
 	public Integer getLikeId() {
 		return likeId;
@@ -39,19 +39,19 @@ public class PollLikes implements Serializable {
 		this.likeId = likeId;
 	}
 
-	public String getContactId() {
+	public Integer getContactId() {
 		return contactId;
 	}
 
-	public void setContactId(String contactId) {
+	public void setContactId(Integer contactId) {
 		this.contactId = contactId;
 	}
 
-	public String getLikeStatus() {
+	public Boolean getLikeStatus() {
 		return likeStatus;
 	}
 
-	public void setLikeStatus(String likeStatus) {
+	public void setLikeStatus(Boolean likeStatus) {
 		this.likeStatus = likeStatus;
 	}
 

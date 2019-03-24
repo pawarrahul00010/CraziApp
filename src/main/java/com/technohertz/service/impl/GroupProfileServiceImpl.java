@@ -1,5 +1,7 @@
 package com.technohertz.service.impl;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,10 +12,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.technohertz.model.GroupPoll;
 import com.technohertz.model.GroupProfile;
+import com.technohertz.model.PollOption;
 import com.technohertz.model.UserContact;
 import com.technohertz.repo.GroupProfileRepository;
+import com.technohertz.repo.UserContactRepository;
 import com.technohertz.service.IGroupProfileService;
+import com.technohertz.util.DateUtil;
 
 @Service
 public class GroupProfileServiceImpl implements IGroupProfileService{
@@ -21,11 +27,16 @@ public class GroupProfileServiceImpl implements IGroupProfileService{
 	
 	@Autowired
 	private GroupProfileRepository groupProfileRepository;
+
+	
+	@Autowired
+	private UserContactRepository userContactRepository;
 	
 	@PersistenceContext
 	public EntityManager entityManager;
 
-
+@Autowired
+DateUtil dateUtil;
 
 	public GroupProfile save(GroupProfile groupProfile) {
 		
@@ -125,4 +136,57 @@ public class GroupProfileServiceImpl implements IGroupProfileService{
 		
 	}
 
+	@Override
+	public GroupProfile createPoll(String pollName, String createdBy, Integer groupId, String optionNameList,String pollExpiryDate) {
+		GroupProfile groupProfile=groupProfileRepository.getOne(groupId);
+		GroupPoll groupPoll =new GroupPoll();
+		if(!groupProfile.equals(null))
+		{
+			UserContact phoneNumber=userContactRepository.getOne(Integer.parseInt(createdBy));
+			if(!phoneNumber.equals(null))
+			{
+				groupPoll.setCreatedBy(Integer.parseInt(createdBy));
+				groupPoll.setGroupId(groupId);
+				groupPoll.setPollName(pollName);
+				groupPoll.setCreateDate(dateUtil.getDate());
+				
+				String str = pollExpiryDate;
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+				LocalDateTime dateTime = LocalDateTime.parse(str, formatter);
+
+				groupPoll.setExpiryDate(dateTime);
+				
+				List<String> pollOptions = getoptionList(optionNameList);
+				List<PollOption> optionsList= new ArrayList<PollOption>();
+				if(!pollOptions.isEmpty())
+				{
+					for(String optionName :pollOptions)
+					{
+						PollOption option =new PollOption();
+						option.setOptionName(optionName);
+						option.setTotalLikes(0l);
+						optionsList.add(option);
+						
+					}
+					groupPoll.setPollOptions(optionsList);
+				}
+				groupProfile.getGroupPolls().add(groupPoll);
+			}
+		}
+		
+		return groupProfile;
+	}
+	private List<String> getoptionList(String optionNameList) {
+		// TODO Auto-generated method stub
+		List<String> optionList = new ArrayList<String>();
+		String options[] = optionNameList.split(",");
+		
+		for(String userContact : options ) {
+		
+				optionList.add(userContact);
+			}
+		return optionList;
+	}
+
+	
 }

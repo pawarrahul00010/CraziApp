@@ -5,16 +5,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.persistence.EntityManager;
+import javax.transaction.Transactional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.technohertz.model.Empty;
+import com.technohertz.model.SecretConversation;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserRegister;
+import com.technohertz.repo.UserContactRepository;
 import com.technohertz.service.IUserContactService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.util.DateUtil;
@@ -28,6 +34,11 @@ public class ContactRestController {
 	@Autowired
 	private IUserRegisterService userRegisterService;
 	
+	
+	@Autowired
+	EntityManager entityManager;
+	@Autowired
+	private UserContactRepository userContactRepository;
 	@Autowired
 	private IUserContactService userContactService;
 	
@@ -189,6 +200,40 @@ public class ContactRestController {
 			response.setStatus("SUCCESS");
 			return ResponseEntity.ok(response);
 				
+		}
+	
+	@Transactional
+	@PostMapping("/secret")
+	public ResponseEntity<ResponseObject> secretConvertation(@RequestParam("contactId") Integer contactId,@RequestParam("secretId") Integer secretId,@RequestParam("status") Boolean status){
+		
+		UserContact userContact = userContactRepository.getOne(contactId);
+		
+		if(!userContact.equals(null) && status==true)
+		{
+			SecretConversation secretConversation =new SecretConversation();
+			secretConversation.setStatus(status);
+			secretConversation.setSecretId(secretId);
+			userContact.getSecretConversation().add(secretConversation);
+			userContactRepository.save(userContact);
+			String message = "you are doing Secret Conversation successfully";
+			response.setError("0");
+			response.setMessage(message);
+			response.setData(userContact);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+		
+		}
+		else
+		{
+			entityManager.createNativeQuery("delete p from secret_conversation p where p.secret_id=:secretId  AND p.CONTACT_ID=:contactId").setParameter("secretId",secretId).setParameter("contactId", contactId).executeUpdate();
+			String message = "conversation destroyed successfully";
+			response.setError("0");
+			response.setMessage(message);
+			response.setData(empty);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+		
+		}
 		}
 		
 }

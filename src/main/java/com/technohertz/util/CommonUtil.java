@@ -1,5 +1,6 @@
 package com.technohertz.util;
 
+import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -79,9 +80,9 @@ public class CommonUtil {
 			return userCurrentProfileList;
 		}
 		
-		public Float getRating(List<MediaFiles> mediaFileslist) {
+		public Double getRating(List<MediaFiles> mediaFileslist) {
 			
-			Float rate = 0.0f;
+			Double rate = 0.0d;
 			
 			int count = 0;
 			
@@ -91,8 +92,9 @@ public class CommonUtil {
 				count = count + 1;
 			}
 			rate = rate/count;
-			
-			return rate;
+			 DecimalFormat df = new DecimalFormat("#.#");
+		        System.out.print(df.format(rate));
+			return Double.parseDouble(df.format(rate));
 		}
 
 		public Float getupdateRating(List<LikedUsers> likedUserlist, Float rateCount, Integer typeId) {

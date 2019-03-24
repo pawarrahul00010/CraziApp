@@ -79,7 +79,6 @@ public class UserRegister implements Serializable {
 	@JoinColumn(name="USR_DET_ID")
 	private UserProfile profile = new UserProfile();
 
-
 	
 	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 
@@ -252,6 +251,8 @@ public class UserRegister implements Serializable {
 	public void setGroupList(List<GroupProfile> groupList) {
 		this.groupList = groupList;
 	}
+
+	
 
 	@Override
 	public String toString() {

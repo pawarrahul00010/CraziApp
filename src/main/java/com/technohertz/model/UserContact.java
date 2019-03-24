@@ -2,21 +2,28 @@ package com.technohertz.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.technohertz.util.SecretConvResponce;
 
 @Transactional
 @Entity
@@ -51,6 +58,10 @@ public class UserContact implements Comparable<UserContact>, Serializable{
 	
 	@Column(name = "CREATE_DATE", nullable = true, length = 200)
 	private LocalDateTime createDate;
+	
+		@OneToMany(cascade=javax.persistence.CascadeType.ALL)
+		@JoinColumn(name="CONTACT_ID")
+		private List<SecretConversation> secretConversation=new ArrayList<SecretConversation>();
 	
 	/*
 	 * @ManyToMany(cascade = {CascadeType.PERSIST,CascadeType.MERGE}) private
@@ -214,6 +225,22 @@ public class UserContact implements Comparable<UserContact>, Serializable{
 
 	public void setGroupList(Set<GroupProfile> groupList) {
 		this.groupList = groupList;
+	}
+
+
+	/**
+	 * @return the secretConversation
+	 */
+	public List<SecretConversation> getSecretConversation() {
+		return secretConversation;
+	}
+
+
+	/**
+	 * @param secretConversation the secretConversation to set
+	 */
+	public void setSecretConversation(List<SecretConversation> secretConversation) {
+		this.secretConversation = secretConversation;
 	}
 
 

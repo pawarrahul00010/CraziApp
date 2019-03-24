@@ -25,4 +25,9 @@ public interface IGroupProfileService {
 
 	public void deleteGroupById(Integer groupId);
 
+
+
+	GroupProfile createPoll(String pollName, String createdBy, Integer groupId, String optionNameList,
+			String pollExpiryDate);
+
 }
