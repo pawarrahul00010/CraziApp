@@ -290,13 +290,25 @@ public class UserRegisterController {
 						Boolean userStatus=userRegister.getIsActive();
 						int userID=userRegister.getUserId();
 						
+					LoginResponce loginResponce= new LoginResponce();
+					loginResponce.setUserId(userRegister.getUserId());
+					loginResponce.setUserName(name);
+					loginResponce.setDisplayName(userRegister.getProfile().getDisplayName());
+					loginResponce.setMobilNumber(mobileNumber);
+					loginResponce.setAboutUser(userRegister.getProfile().getAboutUser());
+					loginResponce.setCurrentProfile(userRegister.getProfile().getCurrentProfile());
+					loginResponce.setMediaFiles(userRegister.getProfile().getMedia());
+					loginResponce.setUserContact(userRegister.getUserContactList());
+					List<SecretConversation> conversation= entitymanager.createNativeQuery("SELECT c from secret_conversation where contact_id=:userID",SecretConversation.class).setParameter("userID", userID).getResultList();
+					loginResponce.setSecretConversation(userRegister.getUserContactList().get(0).getSecretConversation());
+						
 					
 					if (mobileNumber.equals(user)  && password.equals(pass) && userStatus.equals(true)) 
 					{
 						response.setStatus("SUCCESS");
 						response.setMessage("Logged in successfully");
 						response.setError("0");
-						response.setData(userList);
+						response.setData(loginResponce);
 						return ResponseEntity.ok(response);
 						
 					}else {
@@ -315,14 +327,26 @@ public class UserRegisterController {
 						Boolean userStatus=userRegister.getIsActive();
 						int userID=userRegister.getUserId();
 						
-					
+						LoginResponce loginResponce= new LoginResponce();
+						loginResponce.setUserId(userRegister.getUserId());
+						loginResponce.setUserName(name);
+						loginResponce.setDisplayName(userRegister.getProfile().getDisplayName());
+						loginResponce.setMobilNumber(userRegister.getMobilNumber());
+						loginResponce.setAboutUser(userRegister.getProfile().getAboutUser());
+						loginResponce.setCurrentProfile(userRegister.getProfile().getCurrentProfile());
+						loginResponce.setMediaFiles(userRegister.getProfile().getMedia());
+						loginResponce.setUserContact(userRegister.getUserContactList());
+						List<SecretConversation> conversation= entitymanager.createNativeQuery("SELECT c from secret_conversation where contact_id=:userID",SecretConversation.class).setParameter("userID", userID).getResultList();
+						loginResponce.setSecretConversation(userRegister.getUserContactList().get(0).getSecretConversation());
+							
+						
 						
 					if (name.equals(user)  && password.equals(pass) && userStatus==true) 
 					{
 						response.setStatus("SUCCESS");
 						response.setMessage("Logged in successfully");
 						response.setError("0");
-						response.setData(userRegisterList);
+						response.setData(loginResponce);
 						return ResponseEntity.ok(response);
 						
 					}else {

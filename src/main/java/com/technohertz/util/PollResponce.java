@@ -21,7 +21,22 @@ public class PollResponce {
 
 	private String pollName;
 	
-private LocalDateTime pollCreatedDate;
+	private LocalDateTime pollCreatedDate;
+	private LocalDateTime pollExpiryDate;
+	/**
+	 * @return the pollExpiryDate
+	 */
+	public LocalDateTime getPollExpiryDate() {
+		return pollExpiryDate;
+	}
+
+	/**
+	 * @param pollExpiryDate the pollExpiryDate to set
+	 */
+	public void setPollExpiryDate(LocalDateTime pollExpiryDate) {
+		this.pollExpiryDate = pollExpiryDate;
+	}
+
 	private int createdBy;
 
 	private int groupId;

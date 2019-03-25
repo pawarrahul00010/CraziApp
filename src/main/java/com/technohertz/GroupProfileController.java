@@ -16,6 +16,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -1205,6 +1206,7 @@ public class GroupProfileController extends TimerTask {
 		pollResponce.setPollName(groupProfile.getGroupPolls().get(groupProfile.getGroupPolls().size()-1).getPollName());
 		pollResponce.setCreatedBy(Integer.parseInt(createdBy));
 		pollResponce.setPollCreatedDate(groupProfile.getGroupPolls().get(0).getCreateDate());
+		pollResponce.setPollExpiryDate(groupProfile.getGroupPolls().get(0).getExpiryDate());
 		pollResponce.setGroupId(groupProfile.getGroupId());
 		
 		List<PollOptionResponce> pollOptionResponces= new ArrayList<PollOptionResponce>();
@@ -1316,6 +1318,17 @@ public class GroupProfileController extends TimerTask {
 		}	
 	}
 
+	@Scheduled(cron = "0 0 0 * * *")
+	//@Scheduled(cron = "*/10 * * * * *")
+	public void schedulejob()
+	{
+		String status="exired";
+		LocalDateTime currDate=LocalDateTime.now();
+		System.out.println(currDate);
+		entityManager.createNativeQuery("UPDATE group_poll SET poll_status=:status where expiry_date<= :currDate").setParameter("status", status).setParameter("currDate", currDate).executeUpdate();
+	}
+	
+	
 	@GetMapping("/getPoll")
 	public ResponseEntity<ResponseObject> getPollsByPollId(@RequestParam("optionId") Integer optionId)
 	{
@@ -1337,10 +1350,12 @@ public class GroupProfileController extends TimerTask {
 		}
 		
 	}
+	@SuppressWarnings("unchecked")
 	@GetMapping("/getAllPoll")
 	public ResponseEntity<ResponseObject> getAllPollsByGroupId(@RequestParam("groupId") Integer groupId)
 	{
-		List<GroupProfile> groupProfiles= groupProfileRepository.findAllById(groupId);
+		String status="active";
+		List<GroupPoll> groupProfiles= entityManager.createNativeQuery("SELECT * FROM  group_poll WHERE group_id=:groupId AND poll_status=:status",GroupPoll.class).setParameter("groupId", groupId).setParameter("status", status).getResultList();
 		if(!groupProfiles.isEmpty()) {
 			response.setError("0");
 			response.setMessage("polls fetched successfully");

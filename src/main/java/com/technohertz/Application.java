@@ -7,6 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
@@ -16,6 +17,7 @@ import com.technohertz.util.FileStorageProperties;
 @EnableConfigurationProperties({FileStorageProperties.class})
 @SpringBootApplication(scanBasePackages = { "com.technohertz" })
 @EnableCaching
+@EnableScheduling
 public class Application {
 	//JsonNode mySchema = JsonLoader.fromFile(file);
 	static String FB_BASE_URL="https://craziapp-3c02b.firebaseio.com";

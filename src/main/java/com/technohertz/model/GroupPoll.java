@@ -36,6 +36,23 @@ public class GroupPoll implements Serializable {
 	@Column(name = "POLL_NAME")
 	private String pollName;
 	
+	@Column(name = "poll_status")
+	private String pollStatus;
+	
+	/**
+	 * @return the pollStatus
+	 */
+	public String getPollStatus() {
+		return pollStatus;
+	}
+
+	/**
+	 * @param pollStatus the pollStatus to set
+	 */
+	public void setPollStatus(String pollStatus) {
+		this.pollStatus = pollStatus;
+	}
+
 	@Column(name = "created_By", nullable = true, length = 40)
 	private Integer createdBy;
 
@@ -47,6 +64,9 @@ public class GroupPoll implements Serializable {
 	
 	@Column(name = "expiry_date", nullable = true, length = 200)
 	private LocalDateTime ExpiryDate;
+	
+	
+	
 
 	/**
 	 * @return the createDate

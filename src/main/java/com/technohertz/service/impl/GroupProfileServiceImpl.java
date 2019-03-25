@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -149,7 +150,6 @@ DateUtil dateUtil;
 				groupPoll.setGroupId(groupId);
 				groupPoll.setPollName(pollName);
 				groupPoll.setCreateDate(dateUtil.getDate());
-				
 				String str = pollExpiryDate;
 				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 				LocalDateTime dateTime = LocalDateTime.parse(str, formatter);
