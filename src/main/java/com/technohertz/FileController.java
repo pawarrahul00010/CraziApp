@@ -2,7 +2,6 @@ package com.technohertz;
 
 
 import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -32,6 +31,7 @@ import com.technohertz.model.CardCategory;
 import com.technohertz.model.Cards;
 import com.technohertz.model.Empty;
 import com.technohertz.model.GetImage;
+import com.technohertz.model.GroupPoll;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
 import com.technohertz.model.SharedMedia;
@@ -606,7 +606,6 @@ public class FileController {
 				sharedMedia.setToUser(toUserId);
 				sharedMedia.setFileId(fileName.getFiles().get(fileName.getFiles().size() - 1).getFileId());
 				sharedMedia.setFileName(file.getOriginalFilename());
-				sharedMedia.setShareDate(dateUtil.getDate());
 				fileName.getMedia().add(sharedMedia);
 				userProfileRepository.save(fileName);
    				response.setMessage("your File is Shared successfully");
@@ -637,7 +636,7 @@ public class FileController {
    	  }
        }
        
-
+    
 
     @SuppressWarnings({ "static-access", "unused" })
 	@RequestMapping(value ="/greet" ,method=RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -879,4 +878,187 @@ public class FileController {
 		}
 		}
 	}
+	
+	
+	@PostMapping("/getmediaOfDashboard")
+	public ResponseEntity<ResponseObject> getMediaDashBoard(@RequestParam(value = "userId", required = false) Integer  userId,
+			@RequestParam(value = "mediaType", required = false) String  mediaType,
+			@RequestParam(value = "daysType", required = false) String  daysType) {
+
+		if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(daysType == null) {
+			response.setError("1");
+			response.setMessage("'daysType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(mediaType == null) {
+			response.setError("1");
+			response.setMessage("'mediaType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+			List<MediaFiles> mediaFilesList = new ArrayList<MediaFiles>();
+			
+			if(daysType=="WEEK" || "WEEK".equalsIgnoreCase(daysType)) {
+				
+				mediaFilesList= fileStorageService.getmediaByUserIdandMediaTypeandWeekType(userId, mediaType, daysType);
+				
+			}else if(daysType=="MONTH" || "MONTH".equalsIgnoreCase(daysType)){
+				
+				 mediaFilesList= fileStorageService.getmediaByUserIdandMediaTypeandMonthType(userId, mediaType, daysType);
+				
+			}else {
+				
+			 mediaFilesList= fileStorageService.getmediaByUserIdandMediaTypeandYearType(userId, mediaType, daysType);
+				
+			}
+
+		if(mediaFilesList.isEmpty()) {
+						
+			response.setError("0");
+			response.setMessage("user does not have any files in last "+daysType);
+			response.setData(empty);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+		}
+		else {
+			
+			
+			response.setError("0");	
+			response.setMessage("successfully fetched of "+mediaType+"'s of last "+daysType);
+			response.setData(mediaFilesList);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+			
+		}
+		}
+	}
+	
+	@PostMapping("/getPollOfDashboard")
+	public ResponseEntity<ResponseObject> getPollDashBoard(@RequestParam(value = "userId", required = false) Integer  userId,
+			@RequestParam(value = "daysType", required = false) String  daysType) {
+		
+		if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(daysType == null) {
+			response.setError("1");
+			response.setMessage("'daysType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+			List<GroupPoll> pollList = new ArrayList<GroupPoll>();
+			
+			if(daysType=="WEEK" || "WEEK".equalsIgnoreCase(daysType)) {
+				
+				pollList= fileStorageService.getPollsByUserIdandWeekType(userId, daysType);
+				
+			}else if(daysType=="MONTH" || "MONTH".equalsIgnoreCase(daysType)){
+				
+				pollList= fileStorageService.getPollsByUserIdandMonthType(userId, daysType);
+				
+			}else {
+				
+				pollList= fileStorageService.getPollsByUserIdandYearType(userId, daysType);
+				
+			}
+			
+			if(pollList.isEmpty()) {
+				
+				response.setError("0");
+				response.setMessage("user does not created any polls in last "+daysType);
+				response.setData(empty);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+			}
+			else {
+				
+				
+				response.setError("0");	
+				response.setMessage("successfully fetched of poll's of last "+daysType);
+				response.setData(pollList);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+				
+			}
+		}
+	}
+	
+	/*
+	 * @PostMapping("/getCardBookmark") public ResponseEntity<ResponseObject>
+	 * savePandora(@RequestParam(value = "file", required = false) MultipartFile
+	 * file,
+	 * 
+	 * @RequestParam(value = "userId", required = false) Integer userId,
+	 * 
+	 * @RequestParam(value = "message", required = false) String message,
+	 * 
+	 * @RequestParam(value = "recieverId", required = false) Integer recieverId) {
+	 * 
+	 * if(file == null) { response.setError("1");
+	 * response.setMessage("'file' is empty or null please check");
+	 * response.setData(empty); response.setStatus("FAIL");
+	 * 
+	 * return ResponseEntity.ok(response);
+	 * 
+	 * }else if(userId == null) { response.setError("1");
+	 * response.setMessage("'userId' is empty or null please check");
+	 * response.setData(empty); response.setStatus("FAIL");
+	 * 
+	 * return ResponseEntity.ok(response);
+	 * 
+	 * }else if(message == null) { response.setError("1");
+	 * response.setMessage("'message' is empty or null please check");
+	 * response.setData(empty); response.setStatus("FAIL");
+	 * 
+	 * return ResponseEntity.ok(response);
+	 * 
+	 * }else if(recieverId == null) { response.setError("1");
+	 * response.setMessage("'recieverId' is empty or null please check");
+	 * response.setData(empty); response.setStatus("FAIL");
+	 * 
+	 * return ResponseEntity.ok(response);
+	 * 
+	 * }else {
+	 * 
+	 * 
+	 * UserProfile userProfile= fileStorageService.savePendoraBox(file, userId,
+	 * message, recieverId);
+	 * 
+	 * List<GetImage> image=new ArrayList<GetImage>();
+	 * 
+	 * 
+	 * response.setError("0"); response.setMessage("successfully fetched");
+	 * response.setData(userProfile); response.setStatus("SUCCESS"); return
+	 * ResponseEntity.ok(response);
+	 * 
+	 * } }
+	 */
+	
 }
+
+	
+

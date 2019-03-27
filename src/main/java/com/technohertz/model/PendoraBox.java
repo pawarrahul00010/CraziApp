@@ -36,6 +36,9 @@ public class PendoraBox implements Serializable {
 
 	@Column(name = "message_or_file")
 	private String messageOrFile;
+	
+	@Column(name = "recieverId")
+	private Integer recieverId;
 
 
 	@JsonIgnore
@@ -73,10 +76,10 @@ public class PendoraBox implements Serializable {
 
 
 	/**
-	 * @param messageOrFile the messageOrFile to set
+	 * @param message the messageOrFile to set
 	 */
-	public void setMessageOrFile(String messageOrFile) {
-		this.messageOrFile = messageOrFile;
+	public void setMessageOrFile(String message) {
+		this.messageOrFile = message;
 	}
 
 
@@ -109,6 +112,16 @@ public class PendoraBox implements Serializable {
 	 */
 	public void setUserProfile(UserProfile userProfile) {
 		this.userProfile = userProfile;
+	}
+
+
+	public Integer getRecieverId() {
+		return recieverId;
+	}
+
+
+	public void setRecieverId(Integer recieverId) {
+		this.recieverId = recieverId;
 	}
 
 

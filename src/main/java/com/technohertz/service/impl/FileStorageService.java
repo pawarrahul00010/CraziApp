@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -28,6 +29,7 @@ import com.technohertz.exception.MyFileNotFoundException;
 import com.technohertz.model.AdminProfile;
 import com.technohertz.model.CardCategory;
 import com.technohertz.model.Cards;
+import com.technohertz.model.GroupPoll;
 import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
@@ -303,51 +305,6 @@ public class FileStorageService {
 				}
 		}
 	
-	@SuppressWarnings("unchecked")
-	public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType, HttpServletRequest request) {
-	
-			List<AdminProfile> adminProfile = adminProfileRepository.findByProfileId(adminId);
-		CardCategory cardCategory =new CardCategory();
-		MediaFiles mediaFiles =new MediaFiles();
-		String fileName = StringUtils
-				.cleanPath(String.valueOf(adminId) + System.currentTimeMillis() + getFileExtension(file));
-		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-				.path("/downloadFile/")
-				.path(String.valueOf(fileName))
-				.toUriString();
-		
-		if (fileName.contains("..")) {
-			throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
-		}
-		
-		
-				if (!adminProfile.isEmpty()) {
-					cardCategory.setCategoryName(categoryName);
-					cardCategory.setCategoryType(categoryType);
-					cardCategory.setFilePath(fileDownloadUri);
-					cardCategory.setCreatedDate(dateUtil.getDate());
-					adminProfile.get(0).getCardCategories().add(cardCategory);
-					mediaFiles.setFilePath(fileDownloadUri);
-					mediaFiles.setFileType(categoryType);
-					mediaFiles.setCreateDate(dateUtil.getDate());
-					cardCategory.setProfile(adminProfile.get(0));
-					adminProfile.get(0).getFiles().add(mediaFiles);
-					
-					Path targetLocation = this.fileStorageLocation.resolve(fileName);
-					try {
-						Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-					} catch (IOException e) {
-						throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
-					}
-					}else {
-						
-						return null;
-					}
-				return adminProfileRepository.save(adminProfile.get(0));
-	  }
-	
-	
-	
 	public UserProfile saveAllProfile(MultipartFile file, int userId,String DisplayName,String aboutUser) {
 		// Normalize file name
 
@@ -563,6 +520,203 @@ public class FileStorageService {
 				.setParameter("typeId", likedUsers.getTypeId())
 				.executeUpdate(); 
 		}
+		
+		
+		
+		
+		public UserProfile savePendoraBox(MultipartFile file, int userId, String message, int recieverId) {
+
+			List<UserProfile> userprofile = null;
+			MediaFiles mfile = new MediaFiles();
+	
+			userprofile = userprofileRepo.findById(userId);
+	
+			if (userprofile!=null) {
+	
+				PendoraBox box = new PendoraBox();
+				if (file!=null) {
+					String fileName = StringUtils
+							.cleanPath(String.valueOf(userId) + System.currentTimeMillis() + getFileExtension(file));
+	
+					String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath().path("/downloadFile/")
+							.path(String.valueOf(String.valueOf(fileName))).toUriString();
+					try {
+						if (fileName.contains("..")) {
+							throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+						}
+						mfile.setFilePath(fileDownloadUri);
+						mfile.setIsLiked(false);
+						mfile.setIsRated(false);
+						mfile.setLikes(0l);
+						mfile.setViewer(0l);
+						mfile.setRating(0.0f);
+						mfile.setIsBookMarked(false);
+						mfile.setCreateDate(dateUtil.getDate());
+						mfile.setLastModifiedDate(dateUtil.getDate());
+						mfile.setFileType("PENDORA");
+						box.setMessageOrFile(fileDownloadUri);
+						box.setRecieverId(recieverId);
+						box.getFiles().add(mfile);
+	
+						Path targetLocation = this.fileStorageLocation.resolve(fileName);
+						Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+						userprofile.get(0).getPendoraBox().add(box);
+						return userprofileRepo.save(userprofile.get(0));
+					} 
+					catch (IOException ex) {
+						throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+					
+					}
+				} 
+				else {
+					box.setMessageOrFile(message);
+					userprofile.get(0).getPendoraBox().add(box);
+					return userprofileRepo.save(userprofile.get(0));
+				}
+			}
+			return userprofile.get(0);
+		}
+		
+		
+		
+		public List<PendoraBox> getMessagesById(String userId) {
+			
+			List<PendoraBox> pendoraBoxs= pendoraBoxRepo.findAll();
+			
+		return pendoraBoxs;
+		}
+		
+		
+		
+		
+		@Transactional
+		public int deleteMessagesById(String pendoraId) {
+			
+			int user=entityManager.createNativeQuery("delete p from pendora_box p where p.pendora_id=:pendoraId")
+					.setParameter("pendoraId",pendoraId).executeUpdate();
+			
+		/*
+		 * int userid= entityManager.
+		 * createNativeQuery("delete p,m from pendora_box p INNER JOIN media_files m ON p.pendora_id=m.pendora_id where p.usr_det_id=:userId"
+		 * ) .setParameter("userId",userId).executeUpdate();
+		 */
+		return user;
+			//delete r,u,o,b from User_Register r INNER JOIN User_Profile u on r.userid=u.USR_DET_ID INNER JOIN user_otp o on r.userid=o.otp_id INNER JOIN biometric_table b ON r.userid=b.biometric_id where userid=:userId
+		}
+		
+		
+		public CardCategory storeCards(MultipartFile file, Integer categoryId,String cardText, Character editable) {
+					
+				List<CardCategory> cardCategoryList = cardCategoryRepository.getById(categoryId);
+				
+				Cards cards = new Cards();
+				String fileName = StringUtils
+						.cleanPath(String.valueOf(categoryId) + System.currentTimeMillis() + getFileExtension(file));
+				String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+						.path("/downloadFile/")
+						.path(String.valueOf(fileName))
+						.toUriString();
+				
+				try {
+					if (fileName.contains("..")) {
+						throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+					}
+					
+					
+							if (!cardCategoryList.isEmpty()) {
+								
+									cards.setFilePath(fileDownloadUri);
+									cards.setCreateDate(dateUtil.getDate());
+									cards.setEditable(editable);
+									cards.setCardCategory(cardCategoryList.get(0));
+									cards.setCardText(cardText);
+									
+									cardCategoryList.get(0).getCards().add(cards);
+									
+									Path targetLocation = this.fileStorageLocation.resolve(fileName);
+									Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+									return cardCategoryRepository.save(cardCategoryList.get(0));
+									
+								}else {
+									
+									return null;
+								}
+								
+						} catch (IOException ex) {
+						
+							throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
+					
+						}
+			}
+		
+		
+	
+		public List<CardCategory> getAllGreetinsByCategoryId(Integer categoryId) {
+			return entityManager.createQuery("from CardCategory where categoryId=:categoryId",CardCategory.class)
+					.setParameter("categoryId", categoryId)
+					.getResultList();
+			
+		}
+		@SuppressWarnings("unchecked")
+		public List<MediaFiles> getmediaByUserIdandMediaTypeandWeekType(Integer userId, String mediaType, String daysType) {
+
+			return entityManager.createNativeQuery("select * from media_files where usr_det_id=:userId and file_type=:mediaType and file_create_date >=:daysfrom and file_create_date <=:daysUpto ",MediaFiles.class)
+			.setParameter("userId", userId)
+			.setParameter("mediaType", mediaType)
+			.setParameter("daysfrom", LocalDateTime.now().minusDays(7))
+			.setParameter("daysUpto", LocalDateTime.now())
+			.getResultList();
+			
+		}
+		@SuppressWarnings("unchecked")
+		public List<MediaFiles> getmediaByUserIdandMediaTypeandMonthType(Integer userId, String mediaType, String daysType) {
+
+			return entityManager.createNativeQuery("select * from media_files where usr_det_id=:userId and file_type=:mediaType and file_create_date >=:daysfrom and file_create_date <=:daysUpto ",MediaFiles.class)
+					.setParameter("userId", userId)
+					.setParameter("mediaType", mediaType)
+					.setParameter("daysfrom", LocalDateTime.now().minusMonths(1))
+					.setParameter("daysUpto", LocalDateTime.now())
+					.getResultList();
+			
+		}
+		@SuppressWarnings("unchecked")
+		public List<MediaFiles> getmediaByUserIdandMediaTypeandYearType(Integer userId, String mediaType, String daysType) {
+			
+			return entityManager.createNativeQuery("select * from media_files where usr_det_id=:userId and file_type=:mediaType and file_create_date >=:daysfrom and file_create_date <=:daysUpto ",MediaFiles.class)
+					.setParameter("userId", userId)
+					.setParameter("mediaType", mediaType)
+					.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+					.setParameter("daysUpto", LocalDateTime.now())
+					.getResultList();
+		}
+		@SuppressWarnings("unchecked")
+		public List<GroupPoll> getPollsByUserIdandWeekType(Integer userId, String daysType) {
+
+			return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+					.setParameter("userId", userId)
+					.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+					.setParameter("daysUpto", LocalDateTime.now())
+					.getResultList();
+		}
+		@SuppressWarnings("unchecked")
+		public List<GroupPoll> getPollsByUserIdandMonthType(Integer userId, String daysType) {
+
+			return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+					.setParameter("userId", userId)
+					.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+					.setParameter("daysUpto", LocalDateTime.now())
+					.getResultList();
+		}
+		@SuppressWarnings("unchecked")
+		public List<GroupPoll> getPollsByUserIdandYearType(Integer userId, String daysType) {
+
+			return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+					.setParameter("userId", userId)
+					.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+					.setParameter("daysUpto", LocalDateTime.now())
+					.getResultList();
+		}
+		
 		public UserProfile savePendoraBox(MultipartFile file, int userId, String message) {
 
 		List<UserProfile> userprofile = null;
@@ -614,65 +768,7 @@ public class FileStorageService {
 		}
 		return userprofile.get(0);
 	}
-		public List<PendoraBox> getMessagesById(String userId) {
-			
-			List<PendoraBox> pendoraBoxs= pendoraBoxRepo.findAll();
-		return pendoraBoxs;
-		}
-		@Transactional
-		public int deleteMessagesById(String userId) {
-			
-			int user=entityManager.createNativeQuery("delete p from pendora_box p where p.usr_det_id=:userId").setParameter("userId",userId).executeUpdate();
-			
-			int userid= entityManager.createNativeQuery("delete p,m from pendora_box p INNER JOIN media_files m ON p.pendora_id=m.pendora_id where p.usr_det_id=:userId").setParameter("userId",userId).executeUpdate();
-		return userid;
-			//delete r,u,o,b from User_Register r INNER JOIN User_Profile u on r.userid=u.USR_DET_ID INNER JOIN user_otp o on r.userid=o.otp_id INNER JOIN biometric_table b ON r.userid=b.biometric_id where userid=:userId
-		} 
 		
-		
-		
-		public CardCategory storeCards(MultipartFile file, Integer categoryId,String cardText, Character editable) {
-					
-				List<CardCategory> cardCategoryList = cardCategoryRepository.getById(categoryId);
-				
-				Cards cards = new Cards();
-				String fileName = StringUtils
-						.cleanPath(String.valueOf(categoryId) + System.currentTimeMillis() + getFileExtension(file));
-				String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
-						.path("/downloadFile/")
-						.path(String.valueOf(fileName))
-						.toUriString();
-				
-				try {
-					if (fileName.contains("..")) {
-						throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
-					}
-					
-					
-							if (!cardCategoryList.isEmpty()) {
-								
-									cards.setFilePath(fileDownloadUri);
-									cards.setCreateDate(dateUtil.getDate());
-									cards.setEditable(editable);
-									cards.setCardText(cardText);
-									
-									cardCategoryList.get(0).getCards().add(cards);
-									
-									Path targetLocation = this.fileStorageLocation.resolve(fileName);
-									Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
-									return cardCategoryRepository.save(cardCategoryList.get(0));
-									
-								}else {
-									
-									return null;
-								}
-								
-						} catch (IOException ex) {
-						
-							throw new FileStorageException("Could not store file " + fileName + ". Please try again!", ex);
-					
-						}
-			}
 		public CardCategory storePostCards(MultipartFile file, Integer categoryId, Character editable) {
 			List<CardCategory> cardCategory = cardCategoryRepository.getById(categoryId);
 			Cards card =new Cards();
@@ -709,7 +805,7 @@ public class FileStorageService {
 					return cardCategoryRepository.save(cardCategory.get(0));
 		}
 		
-		public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType) {
+public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType) {
 			
 			List<AdminProfile> userprofile = null;
 			int adminid =adminId;
@@ -760,11 +856,47 @@ public class FileStorageService {
 				
 					}
 		}
-		public List<CardCategory> getAllGreetinsByCategoryId(Integer categoryId) {
-			return entityManager.createQuery("from CardCategory where categoryId=:categoryId",CardCategory.class)
-					.setParameter("categoryId", categoryId)
-					.getResultList();
-			
-		}
+@SuppressWarnings("unchecked")
+public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType, HttpServletRequest request) {
+
+		List<AdminProfile> adminProfile = adminProfileRepository.findByProfileId(adminId);
+	CardCategory cardCategory =new CardCategory();
+	MediaFiles mediaFiles =new MediaFiles();
+	String fileName = StringUtils
+			.cleanPath(String.valueOf(adminId) + System.currentTimeMillis() + getFileExtension(file));
+	String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+			.path("/downloadFile/")
+			.path(String.valueOf(fileName))
+			.toUriString();
+	
+	if (fileName.contains("..")) {
+		throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+	}
+	
+	
+			if (!adminProfile.isEmpty()) {
+				cardCategory.setCategoryName(categoryName);
+				cardCategory.setCategoryType(categoryType);
+				cardCategory.setFilePath(fileDownloadUri);
+				cardCategory.setCreatedDate(dateUtil.getDate());
+				adminProfile.get(0).getCardCategories().add(cardCategory);
+				mediaFiles.setFilePath(fileDownloadUri);
+				mediaFiles.setFileType(categoryType);
+				mediaFiles.setCreateDate(dateUtil.getDate());
+				cardCategory.setProfile(adminProfile.get(0));
+				adminProfile.get(0).getFiles().add(mediaFiles);
+				
+				Path targetLocation = this.fileStorageLocation.resolve(fileName);
+				try {
+					Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+				} catch (IOException e) {
+					throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
+				}
+				}else {
+					
+					return null;
+				}
+			return adminProfileRepository.save(adminProfile.get(0));
+  }
 
 }
