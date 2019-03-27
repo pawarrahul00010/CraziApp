@@ -112,22 +112,22 @@ DateUtil dateUtil;
 
 	@Transactional
 	@Override
-	public void deleteContactsById(Integer groupId, String contactidList) {
+	public void deleteContactsById(Integer groupId, String contactIdList) {
 		
-		contactidList.replace("[", "(");
-		contactidList.replace("]", ")");
-		System.out.println(contactidList);
+		contactIdList.replace("[", "(");
+		contactIdList.replace("]", ")");
+		System.out.println(contactIdList);
 		entityManager.createNativeQuery(" DELETE FROM " + 
-				" group_profile_group_member WHERE group_id=:group_id AND contact_id IN (:contactidList)")
+				" group_profile_group_member WHERE group_id=:group_id AND contact_id IN (:contact_id)")
 				.setParameter("group_id", groupId)
-				.setParameter("contactidList", contactidList).executeUpdate();
+				.setParameter("contact_id", contactIdList).executeUpdate();
 
 	}
 
 	@Override
-	public void deleteAdminFromGroupByContactId(Integer contactId) {
+	public void deleteAdminFromGroupByContact(String mobile_number) {
 
-		entityManager.createQuery("delete from GroupAdmin where contactId=:contactId").setParameter("contactId", contactId).executeUpdate();
+		entityManager.createQuery("delete from GroupAdmin where mobile_number=:mobile_number").setParameter("mobile_number", mobile_number).executeUpdate();
 	}
 
 	@Override

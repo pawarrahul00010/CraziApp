@@ -22,12 +22,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<java.version>1.8</java.version>
 	</properties>
-<!-- 	<repositories>
-	  <repository>
-	    <id>xuggle repo</id>
-	    <url>https://files.liferay.com/mirrors/xuggle.googlecode.com/svn/trunk/repo/share/java/</url>
-	  </repository>
-	</repositories> -->
+
 	<dependencies>
 	
 
@@ -37,6 +32,12 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/org.mule.modules/mule-module-objectstore -->
 
+		<!-- https://mvnrepository.com/artifact/javax.interceptor/javax.interceptor-api -->
+<dependency>
+    <groupId>javax.interceptor</groupId>
+    <artifactId>javax.interceptor-api</artifactId>
+    <version>1.2-b06</version>
+</dependency>
 		
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -78,6 +79,15 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>
+		<dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <scope>provided</scope>
+        </dependency>
+         <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
 			<dependency>
             <groupId>net.sf.ehcache</groupId>
             <artifactId>ehcache</artifactId>
@@ -91,13 +101,13 @@
 		</dependency>
 		<!-- https://mvnrepository.com/artifact/xuggle/xuggle-xuggler -->
 
+<dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-tomcat</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
 
-		<!--   <dependency>
-		    <groupId>xuggle</groupId>
-		    <artifactId>xuggle-xuggler</artifactId>
-		    <version>5.4</version>
-		  </dependency> -->
 			<dependency>
 			    <groupId>org.jcodec</groupId>
 			    <artifactId>jcodec</artifactId>

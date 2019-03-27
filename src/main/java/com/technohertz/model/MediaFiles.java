@@ -85,6 +85,11 @@ public class MediaFiles implements Serializable{
 	
 	@JsonIgnore
 	@ManyToOne(cascade=CascadeType.ALL)
+	@JoinColumn(name ="CATEGORY_ID")
+	private CardCategory cardCategory;
+	
+	@JsonIgnore
+	@ManyToOne(cascade=CascadeType.ALL)
 	@JoinColumn(name ="USR_DET_ID")
 	private UserProfile profile;
 	

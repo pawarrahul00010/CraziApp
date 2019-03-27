@@ -32,8 +32,8 @@ public class GroupAdmin implements Serializable{
 	@Column(name = "Admin_ID")
 	private Integer adminId;
 
-	@Column(name = "Contact_Id")
-	private Integer ContactId;
+	@Column(name = "mobileNumber")
+	private String mobileNumber;
 
 	public Integer getAdminId() {
 		return adminId;
@@ -43,19 +43,18 @@ public class GroupAdmin implements Serializable{
 		this.adminId = adminId;
 	}
 
-	public Integer getContactId() {
-		return ContactId;
+	public String getMobileNumber() {
+		return mobileNumber;
 	}
 
-	public void setContactId(Integer contactId) {
-		ContactId = contactId;
+	public void setMobileNumber(String mobileNumber) {
+		this.mobileNumber = mobileNumber;
 	}
 
 	@Override
 	public String toString() {
-		return "GroupAdmin [adminId=" + adminId + ", ContactId=" + ContactId + "]";
+		return "GroupAdmin [adminId=" + adminId + ", mobileNumber=" + mobileNumber + "]";
 	}
-
 
 
 

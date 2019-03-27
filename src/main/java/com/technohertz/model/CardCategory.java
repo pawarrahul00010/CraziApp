@@ -3,6 +3,7 @@ package com.technohertz.model;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import javax.persistence.CascadeType;
@@ -17,14 +18,11 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.DynamicUpdate;
-
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @SuppressWarnings("serial")
 @Entity
 @Table(name = "CARD_CATEGORY")
-@DynamicUpdate
 public class CardCategory implements Serializable {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -43,6 +41,10 @@ public class CardCategory implements Serializable {
 	@Column(name = "CREATED_DATE")
 	private LocalDateTime createdDate;
 	
+	@JsonIgnore
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+	@JoinColumn(name = "CATEGORY_ID")
+	private List<MediaFiles> mediaFiles = new ArrayList<MediaFiles>();
 	
 	@JsonIgnore
 	@ManyToOne(cascade=CascadeType.ALL)
@@ -50,7 +52,7 @@ public class CardCategory implements Serializable {
 	private AdminProfile profile;
 
 	@JsonIgnore
-	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
+	@OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "CATEGORY_ID")
 	private List<Cards> cards = new ArrayList<Cards>();
 
@@ -70,6 +72,14 @@ public class CardCategory implements Serializable {
 		CategoryName = categoryName;
 	}
 
+	public String getCategoryType() {
+		return categoryType;
+	}
+
+	public void setCategoryType(String categoryType) {
+		this.categoryType = categoryType;
+	}
+
 	public String getFilePath() {
 		return filePath;
 	}
@@ -82,8 +92,8 @@ public class CardCategory implements Serializable {
 		return createdDate;
 	}
 
-	public void setCreatedDate(LocalDateTime createdDate) {
-		this.createdDate = createdDate;
+	public void setCreatedDate(LocalDateTime localDateTime) {
+		this.createdDate = localDateTime;
 	}
 
 	public AdminProfile getProfile() {
@@ -98,17 +108,8 @@ public class CardCategory implements Serializable {
 		return cards;
 	}
 
-	public void setCards(List<Cards> files) {
-		this.cards = files;
-	}
-
-	
-	public String getCategoryType() {
-		return categoryType;
-	}
-
-	public void setCategoryType(String categoryType) {
-		this.categoryType = categoryType;
+	public void setCards(List<Cards> cards) {
+		this.cards = cards;
 	}
 
 	@Override

@@ -12,8 +12,12 @@ import com.technohertz.model.AdminProfile;
 public interface AdminProfileRepository extends JpaRepository<AdminProfile, Integer>{
 
 	Object findBydisplayName(String displayName);
+	
+	
 	List<AdminProfile> getByDisplayName(String userName);
+	
+	
 	@Query(value="SELECT  r from AdminProfile r WHERE r.profileId=?1")
-	List<AdminProfile> findById(int id);
+	List<AdminProfile> findByProfileId(int id);
 
 }

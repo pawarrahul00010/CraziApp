@@ -19,7 +19,6 @@ import javax.persistence.Table;
 import org.hibernate.annotations.DynamicUpdate;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @SuppressWarnings("serial")
 @Entity
@@ -48,10 +47,14 @@ public class Cards implements Serializable {
 	@JoinColumn(name ="CATEGORY_ID")
 	private CardCategory cardCategory;
 	
-	
+	@JsonIgnore
 	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)		
 	@JoinColumn(name="CARD_ID")
 	private List<CardBookmarkUsers> cardBookmarkUserList;
+	@JsonIgnore
+	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)		
+	@JoinColumn(name="CARD_ID")
+	private List<MediaFiles> mediaFiles;
 
 	public Integer getCardId() {
 		return CardId;
@@ -107,6 +110,21 @@ public class Cards implements Serializable {
 
 	public void setEditable(char editable) {
 		this.editable = editable;
+	}
+	
+
+	/**
+	 * @return the mediaFiles
+	 */
+	public List<MediaFiles> getMediaFiles() {
+		return mediaFiles;
+	}
+
+	/**
+	 * @param mediaFiles the mediaFiles to set
+	 */
+	public void setMediaFiles(List<MediaFiles> mediaFiles) {
+		this.mediaFiles = mediaFiles;
 	}
 
 	@Override

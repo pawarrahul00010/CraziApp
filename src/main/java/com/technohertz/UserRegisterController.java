@@ -1,14 +1,18 @@
 package com.technohertz;
 
+import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 import javax.persistence.EntityManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -17,15 +21,18 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.UserRecord;
 import com.google.firebase.auth.UserRecord.CreateRequest;
+import com.google.firebase.database.FirebaseDatabase;
 import com.technohertz.exception.ResourceNotFoundException;
 import com.technohertz.model.Biometric;
 import com.technohertz.model.Empty;
 import com.technohertz.model.MediaFiles;
-import com.technohertz.model.SecretConversation;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserOtp;
 import com.technohertz.model.UserProfile;
@@ -38,15 +45,18 @@ import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GetProfile;
 import com.technohertz.util.GetProfiles;
-import com.technohertz.util.LoginResponce;
 import com.technohertz.util.OtpUtil;
 import com.technohertz.util.ResponseObject;
+import com.technohertz.util.UserFirebase;
 import com.technohertz.util.sendSMS;
 
 @RestController
 @RequestMapping("/userRest")
 public class UserRegisterController {
 
+	
+	static String FB_BASE_URL="https://craziapp-3c02b.firebaseio.com";
+	
 	@Autowired
 	private IUserRegisterService userRegisterService;
 	
@@ -289,26 +299,14 @@ public class UserRegisterController {
 						String password = userRegister.getPassword();
 						Boolean userStatus=userRegister.getIsActive();
 						int userID=userRegister.getUserId();
-						
-					LoginResponce loginResponce= new LoginResponce();
-					loginResponce.setUserId(userRegister.getUserId());
-					loginResponce.setUserName(name);
-					loginResponce.setDisplayName(userRegister.getProfile().getDisplayName());
-					loginResponce.setMobilNumber(mobileNumber);
-					loginResponce.setAboutUser(userRegister.getProfile().getAboutUser());
-					loginResponce.setCurrentProfile(userRegister.getProfile().getCurrentProfile());
-					loginResponce.setMediaFiles(userRegister.getProfile().getMedia());
-					loginResponce.setUserContact(userRegister.getUserContactList());
-					List<SecretConversation> conversation= entitymanager.createNativeQuery("SELECT c from secret_conversation where contact_id=:userID",SecretConversation.class).setParameter("userID", userID).getResultList();
-					loginResponce.setSecretConversation(userRegister.getUserContactList().get(0).getSecretConversation());
-						
+					
 					
 					if (mobileNumber.equals(user)  && password.equals(pass) && userStatus.equals(true)) 
 					{
 						response.setStatus("SUCCESS");
 						response.setMessage("Logged in successfully");
 						response.setError("0");
-						response.setData(loginResponce);
+						response.setData(userList);
 						return ResponseEntity.ok(response);
 						
 					}else {
@@ -327,18 +325,6 @@ public class UserRegisterController {
 						Boolean userStatus=userRegister.getIsActive();
 						int userID=userRegister.getUserId();
 						
-						LoginResponce loginResponce= new LoginResponce();
-						loginResponce.setUserId(userRegister.getUserId());
-						loginResponce.setUserName(name);
-						loginResponce.setDisplayName(userRegister.getProfile().getDisplayName());
-						loginResponce.setMobilNumber(userRegister.getMobilNumber());
-						loginResponce.setAboutUser(userRegister.getProfile().getAboutUser());
-						loginResponce.setCurrentProfile(userRegister.getProfile().getCurrentProfile());
-						loginResponce.setMediaFiles(userRegister.getProfile().getMedia());
-						loginResponce.setUserContact(userRegister.getUserContactList());
-						List<SecretConversation> conversation= entitymanager.createNativeQuery("SELECT c from secret_conversation where contact_id=:userID",SecretConversation.class).setParameter("userID", userID).getResultList();
-						loginResponce.setSecretConversation(userRegister.getUserContactList().get(0).getSecretConversation());
-							
 						
 						
 					if (name.equals(user)  && password.equals(pass) && userStatus==true) 
@@ -346,7 +332,7 @@ public class UserRegisterController {
 						response.setStatus("SUCCESS");
 						response.setMessage("Logged in successfully");
 						response.setError("0");
-						response.setData(loginResponce);
+						response.setData(userRegisterList);
 						return ResponseEntity.ok(response);
 						
 					}else {
@@ -396,6 +382,20 @@ public class UserRegisterController {
 			
 		}else {
 		
+			try {
+				FirebaseOptions options = new FirebaseOptions.Builder()
+						.setCredentials(GoogleCredentials
+								.fromStream(new ClassPathResource("/craziapp-3c02b-firebase-adminsdk-rrs6o-3add9ace15.json").getInputStream()))
+						.setDatabaseUrl(FB_BASE_URL).build();
+				if (FirebaseApp.getApps().isEmpty()) {
+					FirebaseApp.initializeApp(options);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			FirebaseDatabase database = FirebaseDatabase.getInstance();
+			
 				UserRegister user = new UserRegister();
 				UserContact userContact = new UserContact();
 				UserProfile profile = new UserProfile();
@@ -449,6 +449,13 @@ public class UserRegisterController {
 						
 						UserRecord userRecord = FirebaseAuth.getInstance().createUser(request);
 						System.out.println("Successfully created new user: " + userRecord.getUid());
+						
+						Map<String, Object> users = new HashMap<>();
+						users.put(user.getUserName(), new UserFirebase(user.getUserId(),user.getUserName(), "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png", user.getUserName(),user.getIsActive().toString()));
+					
+						//ref.child("group").setValueAsync("group", new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getUserName(), groupProfile.getGroupMember()));
+						//ref.getDatabase().getReference().push().c.getReferenceFromUrl(FB_BASE_URL).setValueAsync(groups);
+						database.getReference().child("Usres").updateChildrenAsync(users);
 					} catch (FirebaseAuthException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

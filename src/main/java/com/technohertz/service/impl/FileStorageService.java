@@ -9,6 +9,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.List;
 
 import javax.persistence.EntityManager;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -302,6 +303,51 @@ public class FileStorageService {
 				}
 		}
 	
+	@SuppressWarnings("unchecked")
+	public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType, HttpServletRequest request) {
+	
+			List<AdminProfile> adminProfile = adminProfileRepository.findByProfileId(adminId);
+		CardCategory cardCategory =new CardCategory();
+		MediaFiles mediaFiles =new MediaFiles();
+		String fileName = StringUtils
+				.cleanPath(String.valueOf(adminId) + System.currentTimeMillis() + getFileExtension(file));
+		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+				.path("/downloadFile/")
+				.path(String.valueOf(fileName))
+				.toUriString();
+		
+		if (fileName.contains("..")) {
+			throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+		}
+		
+		
+				if (!adminProfile.isEmpty()) {
+					cardCategory.setCategoryName(categoryName);
+					cardCategory.setCategoryType(categoryType);
+					cardCategory.setFilePath(fileDownloadUri);
+					cardCategory.setCreatedDate(dateUtil.getDate());
+					adminProfile.get(0).getCardCategories().add(cardCategory);
+					mediaFiles.setFilePath(fileDownloadUri);
+					mediaFiles.setFileType(categoryType);
+					mediaFiles.setCreateDate(dateUtil.getDate());
+					cardCategory.setProfile(adminProfile.get(0));
+					adminProfile.get(0).getFiles().add(mediaFiles);
+					
+					Path targetLocation = this.fileStorageLocation.resolve(fileName);
+					try {
+						Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+					} catch (IOException e) {
+						throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
+					}
+					}else {
+						
+						return null;
+					}
+				return adminProfileRepository.save(adminProfile.get(0));
+	  }
+	
+	
+	
 	public UserProfile saveAllProfile(MultipartFile file, int userId,String DisplayName,String aboutUser) {
 		// Normalize file name
 
@@ -581,7 +627,8 @@ public class FileStorageService {
 			int userid= entityManager.createNativeQuery("delete p,m from pendora_box p INNER JOIN media_files m ON p.pendora_id=m.pendora_id where p.usr_det_id=:userId").setParameter("userId",userId).executeUpdate();
 		return userid;
 			//delete r,u,o,b from User_Register r INNER JOIN User_Profile u on r.userid=u.USR_DET_ID INNER JOIN user_otp o on r.userid=o.otp_id INNER JOIN biometric_table b ON r.userid=b.biometric_id where userid=:userId
-		}
+		} 
+		
 		
 		
 		public CardCategory storeCards(MultipartFile file, Integer categoryId,String cardText, Character editable) {
@@ -607,7 +654,6 @@ public class FileStorageService {
 									cards.setFilePath(fileDownloadUri);
 									cards.setCreateDate(dateUtil.getDate());
 									cards.setEditable(editable);
-									cards.setCardCategory(cardCategoryList.get(0));
 									cards.setCardText(cardText);
 									
 									cardCategoryList.get(0).getCards().add(cards);
@@ -627,14 +673,48 @@ public class FileStorageService {
 					
 						}
 			}
-		
+		public CardCategory storePostCards(MultipartFile file, Integer categoryId, Character editable) {
+			List<CardCategory> cardCategory = cardCategoryRepository.getById(categoryId);
+			Cards card =new Cards();
+			String fileName = StringUtils
+					.cleanPath(String.valueOf(categoryId) + System.currentTimeMillis() + getFileExtension(file));
+			String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+					.path("/downloadFile/")
+					.path(String.valueOf(fileName))
+					.toUriString();
+			
+			if (fileName.contains("..")) {
+				throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+			}
+			
+					if (!cardCategory.isEmpty()) {
+						card.setEditable(editable);
+						card.setFilePath(fileDownloadUri);
+						card.setCreateDate(dateUtil.getDate());
+						
+						
+						
+						cardCategory.get(0).getCards().add(card);
+						
+						Path targetLocation = this.fileStorageLocation.resolve(fileName);
+						try {
+							Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+						} catch (IOException e) {
+							throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
+						}
+						}else {
+							
+							return null;
+						}
+					return cardCategoryRepository.save(cardCategory.get(0));
+		}
 		
 		public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType) {
 			
 			List<AdminProfile> userprofile = null;
 			int adminid =adminId;
 			
-			userprofile = adminProfileRepository.findById(adminid);
+			userprofile = adminProfileRepository.findByProfileId(adminid);
 			
 			
 			CardCategory cardCategory= new CardCategory();
@@ -655,7 +735,7 @@ public class FileStorageService {
 							
 							if (!userprofile.isEmpty()) {
 								cardCategory.setCategoryName(categoryName);
-								cardCategory.setCreatedDate(dateUtil.getDate());
+								//cardCategory.setCreatedDate(dateUtil.getDate());
 								cardCategory.setCategoryType(categoryType);			
 								cardCategory.setFilePath(fileDownloadUri);
 								cardCategory.setProfile(userprofile.get(0));

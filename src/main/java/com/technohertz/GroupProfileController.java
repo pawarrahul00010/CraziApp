@@ -4,13 +4,14 @@ import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TimerTask;
 
 import javax.persistence.EntityManager;
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 import com.google.auth.oauth2.GoogleCredentials;
 import com.google.firebase.FirebaseApp;
 import com.google.firebase.FirebaseOptions;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.technohertz.common.Constant;
 import com.technohertz.exception.ResourceNotFoundException;
@@ -65,9 +67,13 @@ import com.technohertz.util.ResponseObject;
 @RestController
 @RequestMapping("/groupRest")
 public class GroupProfileController extends TimerTask {
+	
 	static String FB_BASE_URL="https://craziapp-3c02b.firebaseio.com";
+	
 	@Autowired
 	private Empty empty;
+	
+	private HttpServletRequest request;
 
 	@Autowired
 	PollLikesRepository pollLikesRepository;
@@ -126,6 +132,7 @@ public class GroupProfileController extends TimerTask {
 	private FileStorageService fileStorageService;
 
 	 
+		@SuppressWarnings("unchecked")
 		@PostMapping("/create")
 		public ResponseEntity<ResponseObject> createGroup(@RequestParam(value ="contactList", required=false) String contacts,
 				@RequestParam(value ="file", required=false) MultipartFile file, 
@@ -183,6 +190,7 @@ public class GroupProfileController extends TimerTask {
 				}
 				
 				FirebaseDatabase database = FirebaseDatabase.getInstance();
+				
 
 				List<UserContact> retrivedContactList = userContactService.getAll();// get all user from database
 
@@ -212,7 +220,8 @@ public class GroupProfileController extends TimerTask {
 				//groupProfile.setCreateDate(System.currentTimeMillis());
 				
 				
-				Set<GroupAdmin> adminList = new HashSet<GroupAdmin>();
+				List<GroupAdmin> adminList = new ArrayList<GroupAdmin>();
+				List<String> adminlist = new ArrayList<String>();
 				List<UserRegister> userList = userRegisterService.getById(userId);
 				UserRegister userRegister = null;
 				if(!userList.isEmpty()) {
@@ -220,8 +229,8 @@ public class GroupProfileController extends TimerTask {
 					//if(groupProfile.getAdminSet().contains(contactProfileList.get(userList.get(0).getMobilNumber()))) {
 						
 						GroupAdmin groupAdmin = new GroupAdmin();
-						groupAdmin.setContactId(contactProfileList.get(userList.get(0).getMobilNumber()).getContactId());
-						
+						groupAdmin.setMobileNumber(userList.get(0).getMobilNumber());
+						adminlist.add(userList.get(0).getMobilNumber());
 						adminList.add(groupAdmin);
 						groupProfile.setAdminSet(adminList);
 					//}
@@ -233,7 +242,7 @@ public class GroupProfileController extends TimerTask {
 
 
 				Map<String, Object> groups = new HashMap<>();
-				groups.put(groupProfile.getGroupId().toString(), new GroupFirebase( groupProfile.getDisplayName(), userRegister.getUserName(), "+919657070183"));
+				groups.put(groupProfile.getGroupId().toString(), new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getMobilNumber(), "https://cdn.techgyd.com/Whatsapp-DP-for-Group-4.png"));
 			
 				//ref.child("group").setValueAsync("group", new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getUserName(), groupProfile.getGroupMember()));
 				//ref.getDatabase().getReference().push().c.getReferenceFromUrl(FB_BASE_URL).setValueAsync(groups);
@@ -242,6 +251,13 @@ public class GroupProfileController extends TimerTask {
 				//database.getReference().child("groups").setValueAsync( new GroupFirebase(1, groupProfile.getDisplayName(), userRegister.getUserName(), "+919657070183"));
 				//database.getReference().child("groups").push().setValueAsync(new GroupFirebase(groupProfile.getGroupId()));
 				//usersRef.setValueAsync(groups);
+				
+				
+				List<String> conList= commonUtil.getNonCraziUsers(contactList, retrivedContactList);
+				
+				//send groupLink sms via gateway to above given list
+				
+				
 				groupResponse.setGroupId(groupProfile.getGroupId());
 				groupResponse.setGroupMember(groupProfile.getGroupMember());
 				groupResponse.setAboutGroup(groupProfile.getAboutGroup());
@@ -264,25 +280,33 @@ public class GroupProfileController extends TimerTask {
 		
 
 
+	private void sendSMS(List<String> contsList) {
+
+		System.out.println("GroupLink sms sent to all who are not registered and add those who are registered");
+		
+	}
+
+
+
 	@PostMapping("/make/admin")
-	public ResponseEntity<ResponseObject> updateGroupAdmin(@RequestParam(value ="contactId", required=false) Integer contactId,
-			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
+	public ResponseEntity<ResponseObject> updateGroupAdmin(@RequestParam(value ="mobileNumber", required=false) String mobileNumber,
+			@RequestParam(value ="adminMobile", required=false) String adminMobile, 
 			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
-		if(adminContactId == null ) {
+		if(adminMobile == null ) {
 			
 			response.setError("1");
-			response.setMessage("'adminContactId' is empty or null please check");
+			response.setMessage("'adminMobile' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
 			return ResponseEntity.ok(response);
 		
 		}
-		else if(contactId == null ) {
+		else if(mobileNumber == null ) {
 			
 			response.setError("1");
-			response.setMessage("'contactId' is empty or null please check");
+			response.setMessage("'mobileNumber' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -300,29 +324,54 @@ public class GroupProfileController extends TimerTask {
 
 		}else {
 
+			try {
+				FirebaseOptions options = new FirebaseOptions.Builder()
+						.setCredentials(GoogleCredentials
+								.fromStream(new ClassPathResource("/craziapp-3c02b-firebase-adminsdk-rrs6o-3add9ace15.json").getInputStream()))
+						.setDatabaseUrl(FB_BASE_URL).build();
+				if (FirebaseApp.getApps().isEmpty()) {
+					FirebaseApp.initializeApp(options);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			FirebaseDatabase database = FirebaseDatabase.getInstance();
 
+			
 			List<GroupProfile> getGroupUserList = groupProfileService.findById(groupId);//get group details
 
 			//List<String> conlist = groupProfileService.getGroupContactListById(groupId);//list of mobile no.
 
 			GroupProfile groupProfile = getGroupUserList.get(0);
 			
-			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			List<String> adminList = getAdminList(groupProfile.getAdminSet());
+			List<String> adminlist = new ArrayList<String>();
 			
-			if(adminList.contains(adminContactId)) {
+			if(adminList.contains(adminMobile)) {
 				
 				for(UserContact userContact : groupProfile.getGroupMember()) {
 					
-					if(userContact.getContactId() == contactId || contactId.equals(userContact.getContactId())) {
+					if(userContact.getContactNumber() == mobileNumber || mobileNumber.equals(userContact.getContactNumber())) {
 						
 						GroupAdmin groupAdmin = new GroupAdmin();
-						groupAdmin.setContactId(contactId);
-			
+						
+						groupAdmin.setMobileNumber(mobileNumber);
+						adminlist.add(mobileNumber);
+						adminList.add(mobileNumber);
 						groupProfile.getAdminSet().add(groupAdmin);
 					}
 				}
 				
 				groupProfileService.save(groupProfile);
+				
+				
+				DatabaseReference groupRef = database.getReference().child("groups").child(groupProfile.getGroupId().toString());
+				Map<String, Object> groupUpdates = new HashMap<>();
+				groupUpdates.put("adminList", adminList);
+				
+				database.getReference().child("groups").child(groupProfile.getGroupId().toString()).updateChildrenAsync(groupUpdates);
+				//groupRef.push().updateChildrenAsync(groupUpdates);
 
 				groupResponse.setGroupId(groupProfile.getGroupId());
 				groupResponse.setGroupMember(groupProfile.getGroupMember());
@@ -356,26 +405,26 @@ public class GroupProfileController extends TimerTask {
 
 	}
 
-	private List<Integer> getAdminList(Set<GroupAdmin> adminSet) {
+	private List<String> getAdminList(List<GroupAdmin> adminSet) {
 
-		List<Integer> adminList = new ArrayList<Integer>();
+		List<String> adminList = new ArrayList<String>();
 		for(GroupAdmin groupAdmin : adminSet) {
 			
-			adminList.add(groupAdmin.getContactId());
+			adminList.add(groupAdmin.getMobileNumber());
 		}
 		return adminList;
 	}
 
 	@PostMapping("/update/contact")
 	public ResponseEntity<ResponseObject> updateGroup(@RequestParam(value ="contactNumber", required=false) String contact,
-			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
+			@RequestParam(value ="adminMobile", required=false) String adminMobile, 
 			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
 
-		if(adminContactId == null ) {
+		if(adminMobile == null ) {
 			
 			response.setError("1");
-			response.setMessage("'adminContactId' is empty or null please check");
+			response.setMessage("'adminMobile' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -409,9 +458,9 @@ public class GroupProfileController extends TimerTask {
 
 			GroupProfile groupProfile = getGroupUserList.get(0);
 			List<String> contactsList = getContactsList(groupProfile.getGroupMember());//exist contact list
-			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			List<String> adminList = getAdminList(groupProfile.getAdminSet());
 			
-			if(adminList.contains(adminContactId)) {
+			if(adminList.contains(adminMobile)) {
 				
 				if(!contactsList.contains(contact)) {
 				
@@ -431,6 +480,8 @@ public class GroupProfileController extends TimerTask {
 					groupProfile.setGroupId(groupId);
 		
 					groupProfileService.save(groupProfile);
+					
+					
 		
 					groupResponse.setGroupId(groupProfile.getGroupId());
 					groupResponse.setGroupMember(groupProfile.getGroupMember());
@@ -477,24 +528,24 @@ public class GroupProfileController extends TimerTask {
 
 
 	@PostMapping("/make/normal")
-	public ResponseEntity<ResponseObject> makeNormalUser(@RequestParam(value ="contactId", required=false) Integer contactId,
-			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
+	public ResponseEntity<ResponseObject> makeNormalUser(@RequestParam(value ="mobile", required=false) String mobile,
+			@RequestParam(value ="adminMobile", required=false) Integer adminMobile, 
 			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
-		if(adminContactId == null ) {
+		if(adminMobile == null ) {
 			
 			response.setError("1");
-			response.setMessage("'adminContactId' is empty or null please check");
+			response.setMessage("'adminMobile' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
 			return ResponseEntity.ok(response);
 		
 		}
-		else if(contactId == null ) {
+		else if(mobile == null ) {
 			
 			response.setError("1");
-			response.setMessage("'contactId' is empty or null please check");
+			response.setMessage("'mobile' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -519,11 +570,11 @@ public class GroupProfileController extends TimerTask {
 
 			GroupProfile groupProfile = getGroupUserList.get(0);
 			
-			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			List<String> adminList = getAdminList(groupProfile.getAdminSet());
 			
-			if(adminList.contains(adminContactId)) {
+			if(adminList.contains(mobile)) {
 				
-				groupProfileService.deleteAdminFromGroupByContactId(contactId);
+				groupProfileService.deleteAdminFromGroupByContact(mobile);
 				
 				groupResponse.setGroupId(groupProfile.getGroupId());
 				groupResponse.setGroupMember(groupProfile.getGroupMember());
@@ -574,14 +625,14 @@ public class GroupProfileController extends TimerTask {
 	}
 
 	@PostMapping("/delete/contact")
-	public ResponseEntity<ResponseObject> deleteContactFromGroup(@RequestParam(value ="contactid", required=false) Integer contactid,
-			@RequestParam(value ="adminContactId", required=false) Integer adminContactId, 
+	public ResponseEntity<ResponseObject> deleteContactFromGroup(@RequestParam(value ="mobile", required=false) String mobile,
+			@RequestParam(value ="adminMobile", required=false) String adminMobile, 
 			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
-		if(contactid == null ) {
+		if(mobile == null ) {
 			
 			response.setError("1");
-			response.setMessage("'contactid' is empty or null please check");
+			response.setMessage("'mobile' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -605,15 +656,25 @@ public class GroupProfileController extends TimerTask {
 
 			GroupProfile groupProfile = getGroupUserList.get(0);
 
-			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
+			List<String> adminList = getAdminList(groupProfile.getAdminSet());
+			List<UserContact> userContactList = userContactService.getContactByMobileNumber(mobile);
+			List<Integer> contactIdList = new ArrayList<Integer>();
 			
-			if(adminList.contains(adminContactId)) {
-				if(adminList.contains(contactid)) {
+			String con= "";
+			for(UserContact userContact : userContactList) {
+				Integer contactId = userContact.getContactId();
+				con=con+","+contactId;
+				contactIdList.add(contactId);
+			}
+			
+			
+			if(adminList.contains(adminMobile)) {
+				if(adminList.contains(mobile)) {
 					
-					groupProfileService.deleteAdminFromGroupByContactId(contactid);
+					groupProfileService.deleteAdminFromGroupByContact(mobile);
 				}
 				
-				groupProfileService.deleteContactsById(groupId, String.valueOf(contactid));
+				groupProfileService.deleteContactsById(groupId, con);
 	
 				groupResponse.setGroupId(groupProfile.getGroupId());
 				groupResponse.setGroupMember(groupProfile.getGroupMember());
@@ -644,13 +705,13 @@ public class GroupProfileController extends TimerTask {
 	}
 
 	@PostMapping("/leave/group")
-	public ResponseEntity<ResponseObject> leaveFromGroup(@RequestParam(value ="contactid", required=false) String contactid,
+	public ResponseEntity<ResponseObject> leaveFromGroup(@RequestParam(value ="mobile", required=false) String mobile,
 			@RequestParam(value ="groupId", required=false) Integer groupId) {
 
-		if(contactid == null ) {
+		if(mobile == null ) {
 			
 			response.setError("1");
-			response.setMessage("'contactid' is empty or null please check");
+			response.setMessage("'mobile' is empty or null please check");
 			response.setData(empty);
 			response.setStatus("FAIL");
 			
@@ -674,17 +735,17 @@ public class GroupProfileController extends TimerTask {
 
 			GroupProfile groupProfile = getGroupUserList.get(0);
 
-			List<Integer> adminList = getAdminList(groupProfile.getAdminSet());
-			int contactId = Integer.parseInt(contactid);
+			List<String> adminList = getAdminList(groupProfile.getAdminSet());
+			//int contactId = Integer.parseInt(contactid);
 			
-			if(adminList.contains(contactId)) {
+			if(adminList.contains(mobile)) {
 				
 				if(adminList.size()==1 ) {
 					
 					if(groupProfile.getGroupMember().size()==1) {
 						
 						groupProfileService.deleteGroupById(groupId);
-						groupProfileService.deleteAdminFromGroupByContactId(contactId);
+						groupProfileService.deleteAdminFromGroupByContact(mobile);
 						
 						response.setStatus("Success");
 						response.setMessage("contact removed from Group successfully");
@@ -699,10 +760,20 @@ public class GroupProfileController extends TimerTask {
 						UserContact userContact = groupProfile.getGroupMember().get(0);
 							
 						GroupAdmin groupAdmin = new GroupAdmin();
-						groupAdmin.setContactId(userContact.getContactId());
+						groupAdmin.setMobileNumber(userContact.getContactNumber());
 						
 						groupProfile.getAdminSet().add(groupAdmin);
-						groupProfileService.deleteContactsById(groupId, contactid);
+						
+						List<UserContact> userContactList = userContactService.getContactByMobileNumber(mobile);
+						List<Integer> contactIdList = new ArrayList<Integer>();
+						
+						String con= "";
+						for(UserContact userContact1 : userContactList) {
+							Integer contactId = userContact1.getContactId();
+							con=con+","+contactId;
+							contactIdList.add(contactId);
+						}
+						groupProfileService.deleteContactsById(groupId, con);
 					
 					}
 				}
@@ -711,10 +782,21 @@ public class GroupProfileController extends TimerTask {
 				UserContact userContact = groupProfile.getGroupMember().get(0);
 				
 				GroupAdmin groupAdmin = new GroupAdmin();
-				groupAdmin.setContactId(userContact.getContactId());
+				groupAdmin.setMobileNumber(userContact.getContactNumber());
 				
 				groupProfile.getAdminSet().add(groupAdmin);
-				groupProfileService.deleteContactsById(groupId, contactid);
+				
+				
+				List<UserContact> userContactList = userContactService.getContactByMobileNumber(mobile);
+				List<Integer> contactIdList = new ArrayList<Integer>();
+				
+				String con= "";
+				for(UserContact userContact1 : userContactList) {
+					Integer contactId = userContact1.getContactId();
+					con=con+","+contactId;
+					contactIdList.add(contactId);
+				}
+				groupProfileService.deleteContactsById(groupId, con);
 				
 				
 			}

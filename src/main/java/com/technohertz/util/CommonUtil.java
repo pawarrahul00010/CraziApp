@@ -1,9 +1,13 @@
 package com.technohertz.util;
 
 import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
+import javax.servlet.ServletContext;
+import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -16,6 +20,8 @@ import com.technohertz.service.IUserRegisterService;
 
 @Component
 public class CommonUtil {
+	
+	private HttpServletRequest request;
 
 
 	@Autowired
@@ -45,24 +51,52 @@ public class CommonUtil {
 			
 			Map<String, UserContact> userContactList = new TreeMap<String, UserContact>();
 			
-			Map<String, String> profileList = updateProfilePics(contactList);
+			List<String> conList = getConList(retrivedContactList);
 			
-				for(String contact : contactList) {
-					
-					for(UserContact userContact : retrivedContactList) {
+			List<String> notCraziUserList = new ArrayList<String>();
+			
+			
+			Map<String, String> profileList = updateProfilePics(conList);
+			
+			for(String conts: contactList) {
 						
-						if(contact == userContact.getContactNumber() || userContact.getContactNumber().equals(contact)) {
+				if(conList.contains(conts)) {
+						
+						for(UserContact userContact : retrivedContactList) {
 							
-							userContact.setProfilePic(profileList.get(contact));
-							
-							userContactList.put(contact, userContact);
+							if(conts == userContact.getContactNumber() || userContact.getContactNumber().equals(conts)) {
+								
+								userContact.setProfilePic(profileList.get(conts));
+								
+								userContactList.put(conts, userContact);
+						}
+						
 					}
 					
+				}else {
+					
+					notCraziUserList.add(conts);//send groupLink sms via sms gateway 
+					
 				}
-			
 			}
+			
+			System.out.println("These users are not a craziapp users"+notCraziUserList);
+			//request.getSession().setAttribute("nonregistred", notCraziUserList);
+			
 			return userContactList;
 		}
+
+		
+		private List<String> getConList(List<UserContact> retrivedContactList) {
+			List<String> contactList = new ArrayList<String>();
+
+			for(UserContact userContact : retrivedContactList) {
+				
+				contactList.add(userContact.getContactNumber());
+			}
+			return contactList;
+		}
+
 
 		public Map<String, String> updateProfilePics(List<String> contactList){
 			
@@ -74,9 +108,16 @@ public class CommonUtil {
 		
 			for(String contact : contactList) {
 				
+				if(userList.get(contact).getProfile().getCurrentProfile() == null) {
+				
+					userCurrentProfileList.put(contact, "https://upload.wikimedia.org/wikipedia/commons/8/89/Portrait_Placeholder.png");
+						
+				}else {
+					
 						userCurrentProfileList.put(contact, userList.get(contact).getProfile().getCurrentProfile());
 				}
 				
+			}
 			return userCurrentProfileList;
 		}
 		
@@ -130,6 +171,23 @@ public class CommonUtil {
 			}
 			
 			return likes;
+		}
+		
+
+		public List<String> getNonCraziUsers(List<String> contactList, List<UserContact> retrivedContactList) {
+			// TODO Auto-generated method stub
+			List<String> conList = getConList(retrivedContactList);
+			List<String> notCraziUserList = new ArrayList<String>();
+			
+			for(String conts: contactList) {
+				
+				if(!conList.contains(conts)) {
+						
+					notCraziUserList.add(conts);//send groupLink sms via sms gateway 
+					
+				}
+			}
+			return notCraziUserList;
 		}
 
 		

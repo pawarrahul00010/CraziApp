@@ -3,8 +3,10 @@ package com.technohertz.model;
 import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -15,14 +17,9 @@ import javax.persistence.JoinColumn;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
-import org.hibernate.annotations.DynamicUpdate;
-
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-
 
 @Entity
 @Table(name = "Admin_Register")
-@DynamicUpdate
 public class AdminRegister implements Serializable {
 
 	
@@ -40,9 +37,20 @@ public class AdminRegister implements Serializable {
 	@Column(name = "Source_From", nullable = true, length = 200)
 	private String sourceFrom;
 
+	@Column(name = "first_name", nullable = false, length = 100)
+	private String firstName;
+
+	@Column(name = "last_name", nullable = false, length = 100)
+	private String lastName;
+	
 	@Column(name = "pass_word", nullable = false, length = 100)
 	private String password;
+	
+	@Column(name = "create_date", nullable = false, length = 100)
+	private LocalDateTime createDate;
 
+	@Column(name = "last_modified_date", nullable = false, length = 100)
+	private LocalDateTime lastModifiedDate;
 
 	@Column(name = "mail_id", nullable = false, length = 200)
 	private String mailId;
@@ -54,23 +62,11 @@ public class AdminRegister implements Serializable {
 	@Column(name = "status", nullable = true, length = 200)
 	private Boolean isActive;
 	
-	@Column(name = "createDate", nullable = true)
-	private LocalDateTime createDate;
-	
-	@Column(name = "lastModifiedDate", nullable = true, length = 200)
-	private LocalDateTime lastModifiedDate;
 
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)		
+	@OneToMany(cascade=CascadeType.ALL,fetch=FetchType.EAGER)		
 	@JoinColumn(name="userid")
 	private List<UserRegister> userList=new ArrayList<UserRegister>();
 
-	@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
-	@OneToMany(cascade=javax.persistence.CascadeType.ALL,fetch=FetchType.LAZY)		
-	@JoinColumn(name="BIOMETRIC_ID")
-	private List<Biometric> biometric=new ArrayList<Biometric>();
-
-	
 	public String getSourceFrom() {
 		return sourceFrom;
 	}
@@ -106,22 +102,6 @@ public class AdminRegister implements Serializable {
 	}
 	
 
-
-	public LocalDateTime getCreateDate() {
-		return createDate;
-	}
-
-	public void setCreateDate(LocalDateTime createDate) {
-		this.createDate = createDate;
-	}
-
-	public LocalDateTime getLastModifiedDate() {
-		return lastModifiedDate;
-	}
-
-	public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
-		this.lastModifiedDate = lastModifiedDate;
-	}
 
 
 	/**
@@ -168,25 +148,59 @@ public class AdminRegister implements Serializable {
 		this.userList = userList;
 	}
 
-	public List<Biometric> getBiometric() {
-		return biometric;
+	public String getFirstName() {
+		return firstName;
 	}
 
-	public void setBiometric(List<Biometric> biometric) {
-		this.biometric = biometric;
+	public void setFirstName(String firstName) {
+		this.firstName = firstName;
 	}
 
-	/* (non-Javadoc)
-	 * @see java.lang.Object#toString()
+	public String getLastName() {
+		return lastName;
+	}
+
+	public void setLastName(String lastName) {
+		this.lastName = lastName;
+	}
+
+
+
+	/**
+	 * @return the createDate
 	 */
+	public LocalDateTime getCreateDate() {
+		return createDate;
+	}
+
+	/**
+	 * @param createDate the createDate to set
+	 */
+	public void setCreateDate(LocalDateTime createDate) {
+		this.createDate = createDate;
+	}
+
+	/**
+	 * @return the lastModifiedDate
+	 */
+	public LocalDateTime getLastModifiedDate() {
+		return lastModifiedDate;
+	}
+
+	/**
+	 * @param lastModifiedDate the lastModifiedDate to set
+	 */
+	public void setLastModifiedDate(LocalDateTime lastModifiedDate) {
+		this.lastModifiedDate = lastModifiedDate;
+	}
+
 	@Override
 	public String toString() {
 		return "AdminRegister [adminId=" + adminId + ", sourceFrom=" + sourceFrom + ", password=" + password
-				+ ", mailId=" + mailId + ", Token=" + Token + ", isActive=" + isActive + ", createDate=" + createDate
-				+ ", lastModifiedDate=" + lastModifiedDate + ", userList=" + userList + ", biometric=" + biometric
-				+ "]";
+				+ ", mailId=" + mailId + ", Token=" + Token + ", isActive=" + isActive + ", userList=" + userList + "]";
 	}
 
+	
 
 
 

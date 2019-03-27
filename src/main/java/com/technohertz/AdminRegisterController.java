@@ -28,6 +28,7 @@ import com.technohertz.payload.UploadFileResponse;
 import com.technohertz.service.IAdminRegisterService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.DateUtil;
 import com.technohertz.util.ResponseObject;
 
 @RestController
@@ -44,6 +45,10 @@ public class AdminRegisterController {
 	
 	@Autowired
 	private Empty empty;
+	
+	@Autowired
+	DateUtil dateUtil;
+	
 	@Autowired
 
 	private EntityManager entitymanager;
@@ -227,13 +232,14 @@ public class AdminRegisterController {
 			response.setStatus("FAIL");
 			return ResponseEntity.ok(response);
 		
+			
 		}else {
 		
 				AdminRegister admin = new AdminRegister();
 				admin.setPassword(password);
 				admin.setMailId(mailId);
 				admin.setIsActive(true);
-				admin.setCreateDate(getDate());
+				admin.setCreateDate(dateUtil.getDate());
 				admin.setLastModifiedDate(getDate());
 				admin.setToken(getRandomNumber());
 				admin.setSourceFrom("Laptop");

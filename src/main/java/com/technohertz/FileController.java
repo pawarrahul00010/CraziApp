@@ -2,6 +2,7 @@ package com.technohertz;
 
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -605,6 +606,7 @@ public class FileController {
 				sharedMedia.setToUser(toUserId);
 				sharedMedia.setFileId(fileName.getFiles().get(fileName.getFiles().size() - 1).getFileId());
 				sharedMedia.setFileName(file.getOriginalFilename());
+				sharedMedia.setShareDate(dateUtil.getDate());
 				fileName.getMedia().add(sharedMedia);
 				userProfileRepository.save(fileName);
    				response.setMessage("your File is Shared successfully");
@@ -635,7 +637,7 @@ public class FileController {
    	  }
        }
        
-    
+
 
     @SuppressWarnings({ "static-access", "unused" })
 	@RequestMapping(value ="/greet" ,method=RequestMethod.POST, produces = MediaType.APPLICATION_JSON_VALUE)

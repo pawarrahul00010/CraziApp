@@ -21,7 +21,7 @@ public interface IGroupProfileService {
 
 	public void deleteContactsById(Integer groupId, String contacts);
 
-	public void deleteAdminFromGroupByContactId(Integer contactId);
+	//public void deleteAdminFromGroupByContact(Integer contactId);
 
 	public void deleteGroupById(Integer groupId);
 
@@ -29,5 +29,9 @@ public interface IGroupProfileService {
 
 	GroupProfile createPoll(String pollName, String createdBy, Integer groupId, String optionNameList,
 			String pollExpiryDate);
+
+	void deleteAdminFromGroupByContact(String mobile_number);
+
+	
 
 }

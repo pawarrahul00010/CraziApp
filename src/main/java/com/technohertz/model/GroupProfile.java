@@ -52,7 +52,7 @@ public class GroupProfile implements Serializable {
 	@JsonIgnore
 	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
 	@JoinColumn(name = "GROUP_ID")
-	private java.util.Set<GroupAdmin> adminSet = new java.util.HashSet<GroupAdmin>();
+	private List<GroupAdmin> adminSet = new ArrayList<GroupAdmin>();
 
 	@JsonIgnore
 	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
@@ -199,11 +199,11 @@ public class GroupProfile implements Serializable {
 		this.userList = userList;
 	}
 
-	public java.util.Set<GroupAdmin> getAdminSet() {
+	public List<GroupAdmin> getAdminSet() {
 		return adminSet;
 	}
 
-	public void setAdminSet(java.util.Set<GroupAdmin> adminSet) {
+	public void setAdminSet(List<GroupAdmin> adminSet) {
 		this.adminSet = adminSet;
 	}
 
