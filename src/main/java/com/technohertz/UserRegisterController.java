@@ -42,6 +42,7 @@ import com.technohertz.service.IGroupProfileService;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.ChatSecreteFirebase;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GetProfile;
 import com.technohertz.util.GetProfiles;
@@ -686,6 +687,7 @@ public class UserRegisterController {
 	
 	
 
+	@SuppressWarnings("unused")
 	@PostMapping("/swithmobilenumber")
 	public ResponseEntity<ResponseObject> swithMobileNumber(
 			@RequestParam(value = "oldMobileNumber", required = false) String oldMobileNumber,
@@ -748,5 +750,217 @@ public class UserRegisterController {
 			}
 		}
 	}
+	
+	@SuppressWarnings({ "unchecked" })
+	@PostMapping("/setChatType")
+	public ResponseEntity<ResponseObject> createFirebaseChatType(@RequestParam(value ="senderId", required=false) String senderId,
+			@RequestParam(value ="receiverId", required=false) String receiverId, 
+			@RequestParam(value ="type", required=false) String type) {
+
+		if(senderId == null ) {
+			
+			response.setError("1");
+			response.setMessage("'senderId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (receiverId == null) {
+
+			response.setError("1");
+			response.setMessage("'receiverId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else if (type == null) {
+			response.setError("1");
+			response.setMessage("'type' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		} else {
+			
+			try {
+				FirebaseOptions options = new FirebaseOptions.Builder()
+						.setCredentials(GoogleCredentials
+								.fromStream(new ClassPathResource("/craziapp-3c02b-firebase-adminsdk-rrs6o-3add9ace15.json").getInputStream()))
+						.setDatabaseUrl(FB_BASE_URL).build();
+				if (FirebaseApp.getApps().isEmpty()) {
+					FirebaseApp.initializeApp(options);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			FirebaseDatabase database = FirebaseDatabase.getInstance();
+			
+			String hql="FROM UserRegister WHERE userName= ?1";
+			List<UserRegister> senderList=entitymanager.createQuery(hql).setParameter(1, senderId).getResultList();
+			
+			List<UserRegister> receiverList=entitymanager.createQuery(hql).setParameter(1, receiverId).getResultList();
+			
+			UserRegister senderUser = new UserRegister();
+			UserRegister reciverUser = new UserRegister();
+			
+			if(!senderList.isEmpty()) {
+				
+				senderUser = senderList.get(0);
+			}
+			
+			if(!receiverList.isEmpty()) {
+				
+				reciverUser = receiverList.get(0);
+			}
+			if(senderUser.equals(null) || senderUser == null || reciverUser.equals(null) || reciverUser == null) {
+				
+				System.out.println("User doesn't exist");
+				
+			}else {
+				
+				if(senderUser.getProfile().getCurrentProfile()!= null || senderUser.getProfile().getCurrentProfile()!= "" || reciverUser.getProfile().getCurrentProfile()!= null || reciverUser.getProfile().getCurrentProfile()!= "") {
+				
+					Map<String, Object> groups = new HashMap<>();
+					groups.put(senderId+"_"+receiverId, new ChatSecreteFirebase(senderId,receiverId, type, senderUser.getProfile().getCurrentProfile(),reciverUser.getProfile().getCurrentProfile()));
+					database.getReference().child("chatType").updateChildrenAsync(groups);
+				
+				}else {
+					
+					Map<String, Object> groups = new HashMap<>();
+					groups.put(senderId+"_"+receiverId, new ChatSecreteFirebase(senderId,receiverId, type, senderUser.getProfile().getCurrentProfile(),reciverUser.getProfile().getCurrentProfile()));
+					database.getReference().child("chatType").updateChildrenAsync(groups);
+					System.out.println("User updated with data profile");
+					
+				}
+			}
+		
+			//ref.child("group").setValueAsync("group", new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getUserName(), groupProfile.getGroupMember()));
+			//ref.getDatabase().getReference().push().c.getReferenceFromUrl(FB_BASE_URL).setValueAsync(groups);
+	
+			//database.getReference().child("groups").setValueAsync( new GroupFirebase(1, groupProfile.getDisplayName(), userRegister.getUserName(), "+919657070183"));
+			//database.getReference().child("groups").push().setValueAsync(new GroupFirebase(groupProfile.getGroupId()));
+			//usersRef.setValueAsync(groups);
+			
+			response.setStatus("Success");
+			response.setMessage("Chat Type setted successfully");
+			response.setError("0");
+			response.setData(empty);
+
+			return ResponseEntity.ok(response);
+
+		}
+
+	}
+	
+	@SuppressWarnings("unchecked")
+	@PostMapping("/updateChatType")
+	public ResponseEntity<ResponseObject> updateFirebaseChatType(@RequestParam(value ="senderId", required=false) String senderId,
+			@RequestParam(value ="receiverId", required=false) String receiverId, 
+			@RequestParam(value ="type", required=false) String type) {
+
+		if(senderId == null ) {
+			
+			response.setError("1");
+			response.setMessage("'senderId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+		
+		}
+		else if (receiverId == null) {
+
+			response.setError("1");
+			response.setMessage("'receiverId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		}else if (type == null) {
+			response.setError("1");
+			response.setMessage("'type' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+
+		} else {
+			
+			try {
+				FirebaseOptions options = new FirebaseOptions.Builder()
+						.setCredentials(GoogleCredentials
+								.fromStream(new ClassPathResource("/craziapp-3c02b-firebase-adminsdk-rrs6o-3add9ace15.json").getInputStream()))
+						.setDatabaseUrl(FB_BASE_URL).build();
+				if (FirebaseApp.getApps().isEmpty()) {
+					FirebaseApp.initializeApp(options);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			FirebaseDatabase database = FirebaseDatabase.getInstance();
+			
+
+			String hql="FROM UserRegister as ur WHERE ur.userName= ?1";
+			List<UserRegister> senderList=entitymanager.createQuery(hql).setParameter(1, senderId).getResultList();
+			
+			List<UserRegister> receiverList=entitymanager.createQuery(hql).setParameter(1, receiverId).getResultList();
+			
+			UserRegister senderUser = new UserRegister();
+			UserRegister reciverUser = new UserRegister();
+			
+			if(!senderList.isEmpty()) {
+				
+				senderUser = senderList.get(0);
+			}
+			
+			if(!receiverList.isEmpty()) {
+				
+				reciverUser = receiverList.get(0);
+			}
+			if(senderUser.equals(null) || senderUser == null || reciverUser.equals(null) || reciverUser == null) {
+				
+				System.out.println("User doesn't exist");
+				
+			}else {
+				
+				if(senderUser.getProfile().getCurrentProfile()!= null || senderUser.getProfile().getCurrentProfile()!= "" || reciverUser.getProfile().getCurrentProfile()!= null || reciverUser.getProfile().getCurrentProfile()!= "") {
+				
+					Map<String, Object> groups = new HashMap<>();
+					groups.put(senderId+"_"+receiverId, new ChatSecreteFirebase(senderId,receiverId, type, senderUser.getProfile().getCurrentProfile(),reciverUser.getProfile().getCurrentProfile()));
+					database.getReference().child("chatType").updateChildrenAsync(groups);
+				
+					System.out.println("User updated with data");
+				}
+				
+				else {
+					
+					Map<String, Object> groups = new HashMap<>();
+					groups.put(senderId+"_"+receiverId, new ChatSecreteFirebase(senderId,receiverId, type, senderUser.getProfile().getCurrentProfile(),reciverUser.getProfile().getCurrentProfile()));
+					database.getReference().child("chatType").updateChildrenAsync(groups);
+					System.out.println("User updated with data profile");
+					
+				}
+			}
+		
+			
+			response.setStatus("Success");
+			response.setMessage("Chat Type updated successfully");
+			response.setError("0");
+			response.setData(empty);
+
+			return ResponseEntity.ok(response);
+
+		}
+
+	}
+	
+
 
 }
