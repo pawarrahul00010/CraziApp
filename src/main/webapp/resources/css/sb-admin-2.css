@@ -600,8 +600,8 @@ pre code {
   display: flex;
   -ms-flex-wrap: wrap;
   flex-wrap: wrap;
-  margin-right: -0.75rem;
-  margin-left: -0.75rem;
+  margin-right: -5.25rem;
+  margin-left: 2.25rem;
 }
 
 .no-gutters {
@@ -2151,6 +2151,7 @@ textarea.form-control {
 
 .form-group {
   margin-bottom: 1rem;
+  padding-left: 23%;
 }
 
 .form-text {
@@ -11614,6 +11615,7 @@ form.user .form-control-user {
   font-size: 0.8rem;
   border-radius: 10rem;
   padding: 1.5rem 1rem;
+  width: 68%;
 }
 
 form.user .btn-user {

@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
@@ -16,6 +17,8 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,7 +30,7 @@ import com.technohertz.model.CardCategory;
 import com.technohertz.model.Cards;
 import com.technohertz.model.UserRegister;
 import com.technohertz.payload.UploadFileResponse;
-import com.technohertz.repo.CardCategoryRepository;
+import com.technohertz.repo.AdminRegisterRepository;
 import com.technohertz.service.IAdminDao;
 import com.technohertz.service.impl.AdminProfileDaoImpl;
 import com.technohertz.service.impl.FileStorageService;
@@ -42,6 +45,8 @@ public class AdminController {
 	AdminProfileDaoImpl adminProfileDaoImpl;
 	@Autowired
 	private IAdminDao adminDao;
+	@Autowired
+	AdminRegisterRepository adminRegisterRepository;
 	@Autowired
 	EntityManager entityManager;
 	@Autowired
@@ -108,11 +113,11 @@ public class AdminController {
 	@RequestMapping(value = "/adminLogin", method = RequestMethod.POST)
 	public String adminindex(@RequestParam("email") String email, @RequestParam("password") String password,
 			HttpServletRequest request) {
-		List<AdminRegister> register = adminDao.adminLogin(email, password);
+		List<AdminRegister> register = adminDao.adminLogin(email);
 
 		if (register != null) {
 
-			if (register.get(0).getMailId().equals(email) && register.get(0).getPassword().equals(password)
+			if ( register.get(0).getMailId().equals(email) && register.get(0).getPassword().equals(password)
 					&& register.get(0).getIsActive() == true) {
 				session = request.getSession();
 				session.setAttribute("loggeduser", register.get(0));
@@ -120,22 +125,77 @@ public class AdminController {
 				return "indx";
 			} else {
 
-				return "index";
+				return "login";
 			}
 
 		} else {
 
-			return "index";
+			return "login";
 		}
 
 	}
+	  @PostMapping("/sendForgetPasswordMail")
+	    public String sendForgetPasswordMail(@RequestParam("email") String email) {
+		  	System.out.println("-----------------------");
+		  if(email==null) {
+			  return "forgot-password";
+		  }
+	      
+	
+	        List<AdminRegister> register = adminDao.adminLogin(email);
+	    
+	        if(register!=null)
+	        {   
+	        	adminProfileDaoImpl.forgetPasswordMail(email);
+	        	return "login";
+	        	
+	        }
+	        else {
+	   return "login";
+	        }
+			
+	    }
+	  
+	  @RequestMapping("/resetPassword/{Token}/{userId}")
+	    public String resetPassword(@PathVariable(value = "userId") String userId,HttpServletRequest request) {
+		  System.out.println("------------------------------------------------------");
+		  session = request.getSession();
+			session.setAttribute("loggeduser", userId);
+		  
+			return "reset-pass";
+			
 
-	@RequestMapping(value = "/logout", method = RequestMethod.POST)
+	    }
+	  
+	  
+	  @RequestMapping("/updatePass")
+	  public String updatePass( @RequestParam("password") String password) {
+    System.out.println("------------------------------------------------------");
+    int userId = Integer.valueOf((String) session.getAttribute("loggeduser"));
+      
+      	 List<AdminRegister> adminRegister= adminRegisterRepository.getById(userId);
+      	 if(!adminRegister.isEmpty())
+      	 {
+      		adminRegister.get(0).setPassword(password);;
+      		adminRegister.get(0).setAdminId(userId);
+      		adminRegisterRepository.saveAll(adminRegister);
+      		return "login";
+      		
+      	 }
+      	 else {
+      		 return "404";
+      	 }
+      	 
+
+      }
+     
+	 
+	@RequestMapping(value = "/logout", method = RequestMethod.GET)
 	public String adminLogout(HttpServletRequest request) {
 		session = request.getSession();
 		session.removeAttribute("loggeduser");
 
-		return "redirect:index";
+		return "login";
 
 	}
 
@@ -315,23 +375,7 @@ public class AdminController {
 		
 		return "Card_Catagory_gallery";
 	}
-	@RequestMapping("/getGreatingCards")
-	public String getGreatingCatagory(@RequestParam("adminId") Integer adminId,Model map) {
-		
-		List<CardCategory> cardCategorylist=adminProfileDaoImpl.getAllGreatingCards(adminId);
-		
-		List<CardCategory> categoryList = new ArrayList<CardCategory>();
-		for(CardCategory cardCategory: cardCategorylist) {
-			CardCategory card = new CardCategory();
-			card.setCategoryId(cardCategory.getCategoryId());
-			card.setFilePath(cardCategory.getFilePath());
-			
-			categoryList.add(card);
-		}
-		map.addAttribute("cardList", categoryList);
-		
-		return "Card_Catagory_gallery";
-	}
+	
 	@RequestMapping("/getPCards")
 	public String getPostCards(@RequestParam("categoryId") Integer categoryId,Model map) {
 		
@@ -470,13 +514,29 @@ public class AdminController {
 	public String welcome(Model model) {
 		return "welcome";
 	}
-
+	@RequestMapping("/getGreatingCards")
+	public String getGreatingCatagory(@RequestParam("adminId") Integer adminId,Model map) {
+		
+		List<CardCategory> cardCategorylist=adminProfileDaoImpl.getAllGreatingCards(adminId);
+		
+		List<CardCategory> categoryList = new ArrayList<CardCategory>();
+		for(CardCategory cardCategory: cardCategorylist) {
+			CardCategory card = new CardCategory();
+			card.setCategoryId(cardCategory.getCategoryId());
+			card.setFilePath(cardCategory.getFilePath());
+			
+			categoryList.add(card);
+		}
+		map.addAttribute("cardList", categoryList);
+		
+		return "Greating_card_gallery";
+	}
 	@SuppressWarnings("unused")
 	@RequestMapping(value = "/addCategory", method = RequestMethod.POST)
 	public String uploadCategory(@RequestParam(value = "file", required = false) MultipartFile file,
 			@RequestParam(value = "categoryName", required = false) String categoryName,
 			@RequestParam(value = "adminId", required = false) Integer adminId,
-			@RequestParam(value = "categoryType", required = false) String categoryType, Model map,
+			 Model map,
 			HttpServletRequest request) {
 
 		if (file == null) {
@@ -486,17 +546,13 @@ public class AdminController {
 			map.addAttribute("msg", "'categoryName' is empty or null please check");
 			return "404";
 
-		} else if (categoryType == null) {
-			map.addAttribute("msg", "'categoryType' is empty or null please check");
-			return "404";
-
-		} else if (adminId == null) {
+		}  else if (adminId == null) {
 			map.addAttribute("msg", "'adminId' is empty or null please check");
 			return "404";
 
 		} else {
 
-			fileStorageService.storeCards(file, adminId, categoryName, categoryType, request);
+			fileStorageService.storeCards(file, adminId, categoryName,  request);
 
 			// List<CardCategory> cardCategoryList = adminProfile.getCardCategories();
 
@@ -508,10 +564,21 @@ public class AdminController {
 			// file.getContentType(), file.getSize());
 
 			if (!file.isEmpty() || adminId != null) {
-				map.addAttribute("msg", "your File is uploaded successfully");
+				
 
-				return "upload-gallery";
-
+				List<CardCategory> cardCategorylist=adminProfileDaoImpl.getAllPostCards(adminId);
+				
+				List<CardCategory> categoryList = new ArrayList<CardCategory>();
+				for(CardCategory cardCategory: cardCategorylist) {
+					CardCategory card = new CardCategory();
+					card.setCategoryId(cardCategory.getCategoryId());
+					card.setFilePath(cardCategory.getFilePath());
+					
+					categoryList.add(card);
+				}
+				map.addAttribute("cardList", categoryList);
+				
+				return "Card_Catagory_gallery";
 			} else {
 				map.addAttribute("msg", "your File is not uploaded");
 
@@ -522,7 +589,64 @@ public class AdminController {
 			// return "404";
 		}
 	}
-	
+	@SuppressWarnings("unused")
+	@RequestMapping(value = "/addGreat", method = RequestMethod.POST)
+	public String uploadGreatingCardCatagory(@RequestParam(value = "file", required = false) MultipartFile file,
+			@RequestParam(value = "categoryName", required = false) String categoryName,
+			@RequestParam(value = "adminId", required = false) Integer adminId,
+			 Model map,
+			HttpServletRequest request) {
+
+		if (file == null) {
+			map.addAttribute("msg", "'file' is empty or null please check");
+			return "404";
+		} else if (categoryName == null) {
+			map.addAttribute("msg", "'categoryName' is empty or null please check");
+			return "404";
+
+		}else if (adminId == null) {
+			map.addAttribute("msg", "'adminId' is empty or null please check");
+			return "404";
+
+		} else {
+
+			fileStorageService.storeGreatCards(file, adminId, categoryName,  request);
+
+			// List<CardCategory> cardCategoryList = adminProfile.getCardCategories();
+
+			// if (adminProfile != null) {
+
+			// Object obj=new
+			// UploadFileResponse(cardCategoryList.get(cardCategoryList.size()-1).getFilePath(),
+			// cardCategoryList.get(cardCategoryList.size()-1).getFilePath(),
+			// file.getContentType(), file.getSize());
+
+			if (!file.isEmpty() || adminId != null) {
+				
+
+				List<CardCategory> cardCategorylist=adminProfileDaoImpl.getAllGreatingCards(adminId);
+				
+				List<CardCategory> categoryList = new ArrayList<CardCategory>();
+				for(CardCategory cardCategory: cardCategorylist) {
+					CardCategory card = new CardCategory();
+					card.setCategoryId(cardCategory.getCategoryId());
+					card.setFilePath(cardCategory.getFilePath());
+					
+					categoryList.add(card);
+				}
+				map.addAttribute("cardList", categoryList);
+				
+				return "Greating_card_gallery";
+			} else {
+				map.addAttribute("msg", "your File is not uploaded");
+
+				return "404";
+			}
+			// }else {
+			// map.addAttribute("msg", "User does not exist please register first");
+			// return "404";
+		}
+	}
 
 }
 //}

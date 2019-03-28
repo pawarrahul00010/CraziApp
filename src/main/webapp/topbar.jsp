@@ -2,10 +2,11 @@
     <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
       <!-- Sidebar - Brand -->
-      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="indx">
-        <div class="sidebar-brand-icon ">
+      <a class="sidebar-brand  align-items-center justify-content-center"  style="padding:2%">
+        <div class="sidebar-brand-icon text-left">
 <!--           <i class="fas fa-laugh-wink"></i> -->
- <img src="${contextPath}/resources/images/icon.png" height="55" width="60" >
+ <img src="${contextPath}/resources/images/icon.png" height="55" width="60" style="float:left" >
+ <label style="padding:8%; color:rgba(255,255,255,.8); ">Creazy App</label>
         </div>
         <div class="sidebar-brand-text mx-3"></div>
       </a>
@@ -25,11 +26,11 @@
           <i class="fas fa-fw fa-tachometer-alt"></i>
           <span>User Management</span></a>
       </li>
-      <li class="nav-item">
+   <!--    <li class="nav-item">
         <a class="nav-link" href="save">
           <i class="fas fa-fw fa-tachometer-alt"></i>
           <span>Add Categories</span></a>
-      </li>
+      </li> -->
       <li class="nav-item">
         <a class="nav-link" href="getPostCards?adminId=${loggeduser.adminId}">
           <i class="fas fa-fw fa-tachometer-alt"></i>

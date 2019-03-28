@@ -18,4 +18,7 @@ public interface AdminRegisterRepository extends JpaRepository<AdminRegister, In
 	
 	@Query(value="SELECT  r from AdminRegister r WHERE r.mailId=?1")
 	List<AdminRegister> findByMailId(String mailId);
+	
+	@Query(value="SELECT  r from AdminRegister r WHERE r.Token=?1")
+	AdminRegister findByToken(Long token);
 }

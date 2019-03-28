@@ -27,13 +27,13 @@
 
   <div class="container">
 
-    <div class="card o-hidden border-0 shadow-lg my-5">
-      <div class="card-body p-0">
+    <div class="card o-hidden border-0 shadow-lg my-5" style="padding: 10% 10%">
+      <div class="card-body p-15">
         <!-- Nested Row within Card Body -->
         <div class="row">
-          <div class="col-lg-5 d-none d-lg-block bg-register-image"></div>
-          <div class="col-lg-7">
-            <div class="p-5">
+          <div class="col-lg-50 d-none d-lg-block "></div>
+          <div class="col-lg-8">
+            <div class="p-50">
               <div class="text-center">
                 <h1 class="h4 text-gray-900 mb-4">Create an Account!</h1>
               </div>
@@ -58,23 +58,18 @@
                   </div>
                 </div>
                 <div class="text-right">
-               		<input type="submit" value="Register Account" class="btn btn-facebook btn-user">
+               		<input type="submit" value="Register Account" class="btn btn-facebook btn-user"    style=" padding: 0.75rem 4rem; ">
                 </div>
                
-                <hr>
-                <a href="index.html" class="btn btn-google btn-user btn-block">
-                  <i class="fab fa-google fa-fw"></i> Register with Google
-                </a>
-                <a href="index.html" class="btn btn-facebook btn-user btn-block">
-                  <i class="fab fa-facebook-f fa-fw"></i> Register with Facebook
-                </a>
-              </form>
-              <hr>
+              
+             <!--  <div class="text-center">
+                <a class="small" href="forgot-password">Forgot Password</a>
+              </div> -->
+              
+              </br>
+              </br>
               <div class="text-center">
-                <a class="small" href="forgot-password.html">Forgot Password?</a>
-              </div>
-              <div class="text-center">
-                <a class="small" href="login.html">Already have an account? Login!</a>
+                <a class="small" href="login">Already have an account? Login!</a>
               </div>
             </div>
           </div>

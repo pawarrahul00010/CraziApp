@@ -306,7 +306,7 @@ public class FileStorageService {
 		}
 	
 	@SuppressWarnings("unchecked")
-	public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType, HttpServletRequest request) {
+	public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, HttpServletRequest request) {
 	
 			List<AdminProfile> adminProfile = adminProfileRepository.findByProfileId(adminId);
 		CardCategory cardCategory =new CardCategory();
@@ -325,12 +325,12 @@ public class FileStorageService {
 		
 				if (!adminProfile.isEmpty()) {
 					cardCategory.setCategoryName(categoryName);
-					cardCategory.setCategoryType(categoryType);
+					cardCategory.setCategoryType("POSTCARD");
 					cardCategory.setFilePath(fileDownloadUri);
 					cardCategory.setCreatedDate(dateUtil.getDate());
 					adminProfile.get(0).getCardCategories().add(cardCategory);
 					mediaFiles.setFilePath(fileDownloadUri);
-					mediaFiles.setFileType(categoryType);
+					mediaFiles.setFileType("POSTCARD");
 					mediaFiles.setCreateDate(dateUtil.getDate());
 					cardCategory.setProfile(adminProfile.get(0));
 					adminProfile.get(0).getFiles().add(mediaFiles);
@@ -348,6 +348,49 @@ public class FileStorageService {
 				return adminProfileRepository.save(adminProfile.get(0));
 	  }
 	
+	@SuppressWarnings("unchecked")
+	public AdminProfile storeGreatCards(MultipartFile file, Integer adminId, String categoryName,
+			 HttpServletRequest request) {
+	
+			List<AdminProfile> adminProfile = adminProfileRepository.findByProfileId(adminId);
+		CardCategory cardCategory =new CardCategory();
+		MediaFiles mediaFiles =new MediaFiles();
+		String fileName = StringUtils
+				.cleanPath(String.valueOf(adminId) + System.currentTimeMillis() + getFileExtension(file));
+		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+				.path("/downloadFile/")
+				.path(String.valueOf(fileName))
+				.toUriString();
+		
+		if (fileName.contains("..")) {
+			throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+		}
+		
+		
+				if (!adminProfile.isEmpty()) {
+					cardCategory.setCategoryName(categoryName);
+					cardCategory.setCategoryType("GREETINGCARD");
+					cardCategory.setFilePath(fileDownloadUri);
+					cardCategory.setCreatedDate(dateUtil.getDate());
+					adminProfile.get(0).getCardCategories().add(cardCategory);
+					mediaFiles.setFilePath(fileDownloadUri);
+					mediaFiles.setFileType("GREETINGCARD");
+					mediaFiles.setCreateDate(dateUtil.getDate());
+					cardCategory.setProfile(adminProfile.get(0));
+					adminProfile.get(0).getFiles().add(mediaFiles);
+					
+					Path targetLocation = this.fileStorageLocation.resolve(fileName);
+					try {
+						Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+					} catch (IOException e) {
+						throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
+					}
+					}else {
+						
+						return null;
+					}
+				return adminProfileRepository.save(adminProfile.get(0));
+	  }
 	
 	
 	public UserProfile saveAllProfile(MultipartFile file, int userId,String DisplayName,String aboutUser) {

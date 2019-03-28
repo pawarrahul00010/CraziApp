@@ -13,11 +13,15 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
 import javax.persistence.EntityManager;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.orm.hibernate5.HibernateTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,11 +57,15 @@ public class AdminProfileDaoImpl implements IAdminDao {
 	CardCategoryRepository cardCategoryRepository;
 	@Autowired
 	AdminRegisterRepository adminRegisterRepository;
-	
+	@Autowired
+	private JavaMailSender sender;
 	@Autowired
 	AdminProfileRepository adminProfileRepository;
 	@Autowired
 	EntityManager entityManager;
+	@Autowired
+	private IAdminDao adminDao;
+	
 	@Autowired
 	private DateUtil dateUtil;
 	private  Path fileStorageLocation;
@@ -144,7 +152,7 @@ public class AdminProfileDaoImpl implements IAdminDao {
 	}
 
 	@Override
-	public List<AdminRegister> adminLogin(String email, String password) {
+	public List<AdminRegister> adminLogin(String email) {
 		List<AdminRegister> adminRegister=null;
 		try {
 		List<AdminRegister> reg=	 entityManager
@@ -374,6 +382,28 @@ public class AdminProfileDaoImpl implements IAdminDao {
 			}
 
 			
+			public String forgetPasswordMail(String mail)
+			{
+				MimeMessage message = sender.createMimeMessage();
+				MimeMessageHelper helper = new MimeMessageHelper(message);
+				 List<AdminRegister> register = adminDao.adminLogin(mail);
+				Long token=register.get(0).getToken();
+				Integer adminId=register.get(0).getAdminId();
+				try {
+					helper.setTo(mail);
+					helper.setText("Wel-Come to CRAZIAPP \n \n "+"  http://localhost:8080/resetPassword/"+token+ "/"+adminId+   "    \n This is an Authentication mail from CRAZIAPP please click on the link to verify your account");
+					helper.setSubject("CRAZIAPP ADMIN");
+				} catch (MessagingException e) {
+					e.printStackTrace();
+					return "Error while sending mail ..";
+				}
+				sender.send(message);
+				return "Mail Sent Success!";
+			}
 
+			public AdminRegister resetPassword(Long token) {
+			AdminRegister adminRegister=adminRegisterRepository.findByToken(token);
+				return adminRegister;
+			}
 	
 }

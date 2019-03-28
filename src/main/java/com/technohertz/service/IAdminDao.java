@@ -27,7 +27,7 @@ public interface IAdminDao {
 
 	public AdminRegister saveAdmin(String firstName, String lastName, String email, String password);
 
-	public List<AdminRegister> adminLogin(String email, String password);
+	public List<AdminRegister> adminLogin(String email);
 
 	//public MediaFiles storeFile(CommonsMultipartFile file);
 

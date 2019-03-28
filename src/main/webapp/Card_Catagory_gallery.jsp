@@ -64,13 +64,35 @@
                     <div class="card shadow mb-4">
                     <div class="card-header py-3">
                     
-                      <h6 class="m-0 font-weight-bold text-primary">select Card catagory</h6>
                     </div>
                     <div class="card-body">
                       <p>Upload multiple images to the gallery.</p>
                       
                       <div class="row">
                         <div class="col-sm-6">
+                        
+                            <form method="POST" action="addCategory" enctype="multipart/form-data"> 
+	                        
+	                            <div class="pb-2 pt-2">
+	                            <div id="imagePreview"></div>
+	                            	<input type="file" id="file" name="file" accept="image/*" required />
+			                        <input type="hidden" name="answer" id="answer" />
+			                        
+	                            </div>
+	                            <div class="pb-2">
+		                            <input type="text"  name="categoryName" placeholder="Enter Category Name" style="width:100%;">
+	                            </div>
+	                            <div class="pb-2">                            
+	                            <input type="hidden" class="btn btn-primary btn-icon-split"  name="adminId" value="${loggeduser.adminId}">
+				                </div>
+	                          
+			                    <div class="pt-2">
+				                  	<input type="submit" value="Upload" class="btn btn-primary btn-user">
+				                </div>
+		                             
+		                    </form>
+</br>
+                      <h6 class="m-0 font-weight-bold text-primary">select Card catagory</h6>
 		                     <form method="POST" action="addCategory" enctype="multipart/form-data"> 
 	                        
 	                            <div class="pb-2 pt-2">

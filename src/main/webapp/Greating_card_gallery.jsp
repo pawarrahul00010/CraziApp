@@ -56,22 +56,22 @@
       
         <div class="container-fluid">
           <!-- Page Heading -->
-          <h1 class="h3 mb-4 text-gray-800">Create Gallery</h1>
+          <h1 class="h3 mb-4 text-gray-800">Greating Card Catagory Gallery</h1>
             
             <div class="row">
                 
                 <div class="col-lg-12">
                     <div class="card shadow mb-4">
                     <div class="card-header py-3">
-                     
-                      <h6 class="m-0 font-weight-bold text-primary">Upload Images</h6>
+                    
                     </div>
                     <div class="card-body">
-                      <p>Upload Card Category.</p>
+                      <p>Upload multiple images to the gallery.</p>
                       
                       <div class="row">
                         <div class="col-sm-6">
-		                     <form method="POST" action="addCategory" enctype="multipart/form-data"> 
+                        
+                            <form method="POST" action="addGreat" enctype="multipart/form-data"> 
 	                        
 	                            <div class="pb-2 pt-2">
 	                            <div id="imagePreview"></div>
@@ -89,6 +89,21 @@
 			                    <div class="pt-2">
 				                  	<input type="submit" value="Upload" class="btn btn-primary btn-user">
 				                </div>
+		                             
+		                    </form>
+		                    <br>
+                      <h6 class="m-0 font-weight-bold text-primary">select Card catagory</h6>
+		                     <form method="POST" action="addCategory" enctype="multipart/form-data"> 
+	                        
+	                            <div class="pb-2 pt-2">
+	                            <c:forEach items="${cardList}" var="card">
+	                          
+	                            <td> <a href="saveCard1?categoryId=${card.categoryId}"><img alt="" src="${card.filePath}" with="200" height="200"></a><td>
+	                            </c:forEach>
+	                     
+	                     </tr>
+	                           
+	                     
 		                             
 		                    </form>
                         </div>
