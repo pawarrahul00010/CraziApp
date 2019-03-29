@@ -82,7 +82,6 @@ public class AdminRegisterController {
 	}
 	
 	}
-	@SuppressWarnings("unused")
 	@PostMapping("/deletefile")
 	public ResponseEntity<ResponseObject> deleteUserFile(@RequestParam("fileId") Integer fileId) {
 	Integer fileid=adminRegisterService.deleteUserFile(fileId);

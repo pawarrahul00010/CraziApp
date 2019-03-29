@@ -4,14 +4,19 @@ package com.technohertz;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
@@ -25,6 +30,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.google.auth.oauth2.GoogleCredentials;
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.FirebaseOptions;
+import com.google.firebase.database.DataSnapshot;
+import com.google.firebase.database.DatabaseError;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.database.ValueEventListener;
 import com.technohertz.common.Constant;
 import com.technohertz.model.CardBookmarkUsers;
 import com.technohertz.model.CardCategory;
@@ -32,6 +45,7 @@ import com.technohertz.model.Cards;
 import com.technohertz.model.Empty;
 import com.technohertz.model.GetImage;
 import com.technohertz.model.GroupPoll;
+import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
 import com.technohertz.model.SharedMedia;
@@ -45,8 +59,13 @@ import com.technohertz.service.ICardService;
 import com.technohertz.service.IMediaFileService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.ChatUserListDash;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.DateUtil;
+import com.technohertz.util.MediaDash;
+import com.technohertz.util.MediaDashResponse;
+import com.technohertz.util.PollDash;
+import com.technohertz.util.PollResList;
 import com.technohertz.util.ResponseObject;
 
 @RestController
@@ -64,6 +83,9 @@ public class FileController {
     
 	@Autowired
 	private MediaFileRepo mediaFileRepo;
+	
+	@Autowired
+	private EntityManager entitymanager;
 	
 	@Autowired
 	private ICardService cardService;
@@ -88,6 +110,10 @@ public class FileController {
 
     @Autowired
 	private ResponseObject response;
+    
+    private HttpSession session;
+    
+	static String FB_BASE_URL="https://craziapp-3c02b.firebaseio.com";
     
     
     @SuppressWarnings("unused")
@@ -597,13 +623,17 @@ public class FileController {
    			
        	UserProfile fileName = fileStorageService.shareFile(file, fromUserId,toUserId,fileType);
         SharedMedia sharedMedia =new SharedMedia();
+        
            if (fileName != null) {
+        	   
    			Object obj = new UploadFileResponse(fileName.getFiles().get(fileName.getFiles().size() - 1).getFilePath(),
    					fileName.getFiles().get(0).getFilePath(), file.getContentType(), file.getSize());
+   			
    			if (!file.isEmpty() || fromUserId != null) {
    				sharedMedia.setFilePath(fileName.getFiles().get(fileName.getFiles().size() - 1).getFilePath());
 				sharedMedia.setFormUser(fromUserId);
 				sharedMedia.setToUser(toUserId);
+				sharedMedia.setFileType(fileType);
 				sharedMedia.setFileId(fileName.getFiles().get(fileName.getFiles().size() - 1).getFileId());
 				sharedMedia.setFileName(file.getOriginalFilename());
 				sharedMedia.setShareDate(dateUtil.getDate());
@@ -881,6 +911,7 @@ public class FileController {
 	}
 	
 	
+	@SuppressWarnings({ "unchecked" })
 	@PostMapping("/getmediaOfDashboard")
 	public ResponseEntity<ResponseObject> getMediaDashBoard(@RequestParam(value = "userId", required = false) Integer  userId,
 			@RequestParam(value = "mediaType", required = false) String  mediaType,
@@ -912,7 +943,7 @@ public class FileController {
 			
 		}else {
 			
-			List<MediaFiles> mediaFilesList = new ArrayList<MediaFiles>();
+			List<SharedMedia> mediaFilesList = new ArrayList<SharedMedia>();
 			
 			if(daysType=="WEEK" || "WEEK".equalsIgnoreCase(daysType)) {
 				
@@ -927,12 +958,79 @@ public class FileController {
 			 mediaFilesList= fileStorageService.getmediaByUserIdandMediaTypeandYearType(userId, mediaType, daysType);
 				
 			}
-
-		if(mediaFilesList.isEmpty()) {
+			
+						
+			String hql="FROM UserRegister";
+			List<UserRegister> userList=entitymanager.createQuery(hql).getResultList();
+			
+			Map<String, String> nameList = getNameList(userList);
+			Map<String, String> profileList = getProfileList(userList);
+			
+			List<MediaDash> mediaList = new ArrayList<MediaDash>();
+		
+//			for(SharedMedia share : mediaFilesList) {
+//				List<String> fileList = new ArrayList<String>();
+//				
+//				for(SharedMedia sharedMedia1: mediaFilesList) {
+//					
+//					for(SharedMedia sharedMedia: mediaFilesList ) {
+//						
+//						if(sharedMedia1.getToUser() == sharedMedia.getToUser() || sharedMedia1.getToUser().equals(sharedMedia.getToUser())
+//								||sharedMedia1.getFormUser() == sharedMedia.getFormUser() || sharedMedia1.getFormUser().equals(sharedMedia.getToUser())) {
+//							fileList.add(sharedMedia1.getFilePath());
+//						}
+//					}
+//				}
+//			
+//			}
+			
+			Map<String , List<String>> fileMap= new HashMap<String, List<String>>();
+			
+			List<String> fileList = new ArrayList<String>();
+			
+			for(SharedMedia share : mediaFilesList) {
+				
+				for(SharedMedia sharedMedia: mediaFilesList) {
+					
+					if(sharedMedia.getToUser().equals(share.getToUser()))
+						
+						fileList.add(share.getFilePath());
+					
+				}
+				fileMap.put(String.valueOf(share.getToUser()), fileList);
+			}
+			
+			Map<String, SharedMedia> mediaMap = new HashMap<String, SharedMedia>();
+			
+			for(SharedMedia media : mediaFilesList) {
+				
+				mediaMap.put(media.getToUser(), media);
+			}
+			
+			for(SharedMedia sharedMedia : mediaFilesList) {
+			
+				
+				String id = sharedMedia.getToUser();
+				
+				MediaDash media = new MediaDash();
+				//media.setFileId(sharedMedia.getFileId());
+				//media.setFileName(sharedMedia.getFileName());
+				//media.setFilePathList(mediaMap.get(id));
+				//media.setFileType(sharedMedia.getFileType());
+				media.setToUser(nameList.get(id));
+				media.setReceiverProfile(profileList.get(id));
+				media.setFromUser(Integer.valueOf(sharedMedia.getFormUser()));
+				media.setShareDate(sharedMedia.getShareDate());
+				media.setToUserId(Integer.valueOf(id));
+				
+				mediaList.add(media);
+			}
+			
+		if(mediaList.isEmpty()) {
 						
 			response.setError("0");
 			response.setMessage("user does not have any files in last "+daysType);
-			response.setData(empty);
+			response.setData(mediaList);
 			response.setStatus("SUCCESS");
 			return ResponseEntity.ok(response);
 		}
@@ -941,7 +1039,7 @@ public class FileController {
 			
 			response.setError("0");	
 			response.setMessage("successfully fetched of "+mediaType+"'s of last "+daysType);
-			response.setData(mediaFilesList);
+			response.setData(mediaList);
 			response.setStatus("SUCCESS");
 			return ResponseEntity.ok(response);
 			
@@ -949,6 +1047,160 @@ public class FileController {
 		}
 	}
 	
+	
+	@PostMapping("/getmediaOfDashboardByToUser")
+	public ResponseEntity<ResponseObject> getMediaDashBoardByUserId(@RequestParam(value = "userId", required = false) Integer  userId,
+			@RequestParam(value = "mediaType", required = false) String  mediaType,
+			@RequestParam(value = "toUserId", required = false) Integer  toUserId,
+			@RequestParam(value = "daysType", required = false) String  daysType) {
+
+		if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(toUserId == null) {
+			response.setError("1");
+			response.setMessage("'toUserId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(daysType == null) {
+			response.setError("1");
+			response.setMessage("'daysType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(mediaType == null) {
+			response.setError("1");
+			response.setMessage("'mediaType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+			List<SharedMedia> mediaFilesList = new ArrayList<SharedMedia>();
+			
+			if(daysType=="WEEK" || "WEEK".equalsIgnoreCase(daysType)) {
+				
+				mediaFilesList= fileStorageService.getmediaByUserIdandMediaTypeandWeekType(userId, mediaType, daysType, toUserId);
+				
+			}else if(daysType=="MONTH" || "MONTH".equalsIgnoreCase(daysType)){
+				
+				 mediaFilesList= fileStorageService.getmediaByUserIdandMediaTypeandMonthType(userId, mediaType, daysType, toUserId);
+				
+			}else {
+				
+			 mediaFilesList= fileStorageService.getmediaByUserIdandMediaTypeandYearType(userId, mediaType, daysType, toUserId);
+				
+			}
+			
+						
+			/*
+			 * String hql="FROM UserRegister"; List<UserRegister>
+			 * userList=entitymanager.createQuery(hql).getResultList();
+			 * 
+			 * Map<String, String> nameList = getNameList(userList); Map<String, String>
+			 * profileList = getProfileList(userList);
+			 */
+			
+			List<MediaDashResponse> mediaList = new ArrayList<MediaDashResponse>();
+		
+			Map<String , List<String>> fileMap= new HashMap<String, List<String>>();
+			
+			List<String> fileList = new ArrayList<String>();
+			
+			for(SharedMedia share : mediaFilesList) {
+				
+				for(SharedMedia sharedMedia: mediaFilesList) {
+					
+					if(sharedMedia.getToUser().equals(share.getToUser()))
+						
+						fileList.add(share.getFilePath());
+					
+				}
+				fileMap.put(String.valueOf(share.getToUser()), fileList);
+			}
+			
+
+			
+			Map<String, SharedMedia> mediaMap = new HashMap<String, SharedMedia>();
+			
+			for(SharedMedia media : mediaFilesList) {
+				
+				mediaMap.put(media.getToUser(), media);
+			}
+			
+			for(SharedMedia sharedMedia : mediaFilesList) {
+			
+				String id = sharedMedia.getToUser();
+				
+				MediaDashResponse media = new MediaDashResponse();
+				media.setFileId(sharedMedia.getFileId());
+				media.setFileName(sharedMedia.getFileName());
+				media.setFilePath(sharedMedia.getFilePath());
+				media.setFileType(sharedMedia.getFileType());
+				media.setShareDate(sharedMedia.getShareDate());
+				
+				mediaList.add(media);
+			}
+			
+		if(mediaList.isEmpty()) {
+						
+			response.setError("0");
+			response.setMessage("user does not have any files in last "+daysType);
+			response.setData(mediaList);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+		}
+		else {
+			
+			
+			response.setError("0");	
+			response.setMessage("successfully fetched of "+mediaType+"'s of last "+daysType);
+			response.setData(mediaList);
+			response.setStatus("SUCCESS");
+			return ResponseEntity.ok(response);
+			
+		}
+		}
+	}
+	
+	
+	private Map<String, String> getProfileList(List<UserRegister> userList) {
+		
+	Map<String, String> userNameList = new HashMap<String, String>();
+		
+		for( UserRegister user: userList) {
+			
+			UserProfile userProfile = user.getProfile();
+			
+			userNameList.put(String.valueOf(user.getUserId()), userProfile.getCurrentProfile());
+		}
+		return userNameList;
+	}
+
+	private Map<String, String> getNameList(List<UserRegister> userList) {
+		
+		Map<String, String> userNameList = new HashMap<String, String>();
+		
+		for( UserRegister user: userList) {
+			
+			userNameList.put(String.valueOf(user.getUserId()), user.getUserName());
+		}
+		return userNameList;
+	}
+
+	@SuppressWarnings("unchecked")
 	@PostMapping("/getPollOfDashboard")
 	public ResponseEntity<ResponseObject> getPollDashBoard(@RequestParam(value = "userId", required = false) Integer  userId,
 			@RequestParam(value = "daysType", required = false) String  daysType) {
@@ -987,7 +1239,378 @@ public class FileController {
 				
 			}
 			
+			String hql="FROM GroupProfile";
+			List<GroupProfile> groupList=entitymanager.createQuery(hql).getResultList();
+			
+			Map<Integer, String> groupName = new HashMap<Integer, String>();
+			Map<Integer, String> groupPro = new HashMap<Integer, String>();
+			
+			for(GroupProfile groupProfile :groupList) {
+				
+				groupName.put(groupProfile.getGroupId(), groupProfile.getDisplayName());
+				groupPro.put(groupProfile.getGroupId(), groupProfile.getCurrentProfile());
+			}
+			
+			List<PollDash> pollList1 = new ArrayList<PollDash>();
+			for(GroupPoll groupPoll: pollList) {
+				
+				PollDash pollDash = new PollDash();
+				//pollDash.setPollId(groupPoll.getPollId());
+				pollDash.setCreateDate(groupPoll.getCreateDate());
+				//pollDash.setPollName(groupPoll.getPollName());
+				//pollDash.setPollOptions(groupPoll.getPollOptions());
+				//pollDash.setExpiryDate(groupPoll.getExpiryDate());
+				//pollDash.setCreatedBy(groupPoll.getCreatedBy());
+				pollDash.setGroupId(groupPoll.getGroupId());
+				//pollDash.setPollStatus(groupPoll.getPollStatus());
+				pollDash.setGroupName(groupName.get(groupPoll.getGroupId()));
+				pollDash.setGroupProf(groupPro.get(groupPoll.getGroupId()));
+				pollList1.add(pollDash);
+			}
+			
 			if(pollList.isEmpty()) {
+				
+				response.setError("0");
+				response.setMessage("user does not created any polls in last "+daysType);
+				response.setData(pollList1);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+			}
+			else {
+				
+				
+				response.setError("0");	
+				response.setMessage("successfully fetched of poll's of last "+daysType);
+				response.setData(pollList1);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+				
+			}
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@PostMapping("/getPollOfDashboardbyGroupId")
+	public ResponseEntity<ResponseObject> getPollDashResult(@RequestParam(value = "userId", required = false) Integer  userId,
+			@RequestParam(value = "groupId", required = false) Integer  groupId,
+			@RequestParam(value = "daysType", required = false) String  daysType) {
+		
+		if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(groupId == null) {
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(daysType == null) {
+			response.setError("1");
+			response.setMessage("'daysType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+			List<GroupPoll> pollList = new ArrayList<GroupPoll>();
+			
+			if(daysType=="WEEK" || "WEEK".equalsIgnoreCase(daysType)) {
+				
+				pollList= fileStorageService.getPollsByUserIdandWeekType(userId, daysType,groupId);
+				
+			}else if(daysType=="MONTH" || "MONTH".equalsIgnoreCase(daysType)){
+				
+				pollList= fileStorageService.getPollsByUserIdandMonthType(userId, daysType,groupId);
+				
+			}else {
+				
+				pollList= fileStorageService.getPollsByUserIdandYearType(userId, daysType,groupId);
+				
+			}
+			
+			String hql="FROM GroupProfile";
+			List<GroupProfile> groupList=entitymanager.createQuery(hql).getResultList();
+			
+			Map<Integer, String> groupName = new HashMap<Integer, String>();
+			
+			for(GroupProfile groupProfile :groupList) {
+				
+				groupName.put(groupProfile.getGroupId(), groupProfile.getDisplayName());
+			}
+			
+			List<PollResList> pollList1 = new ArrayList<PollResList>();
+			for(GroupPoll groupPoll: pollList) {
+				
+				PollResList pollDash = new PollResList();
+				pollDash.setPollId(groupPoll.getPollId());
+				//pollDash.setCreateDate(groupPoll.getCreateDate());
+				pollDash.setPollName(groupPoll.getPollName());
+				pollDash.setPollOptions(groupPoll.getPollOptions());
+				pollDash.setExpiryDate(groupPoll.getExpiryDate());
+				//pollDash.setCreatedBy(groupPoll.getCreatedBy());
+				//pollDash.setGroupId(groupPoll.getGroupId());
+				pollDash.setPollStatus(groupPoll.getPollStatus());
+				//pollDash.setGroupName(groupName.get(groupPoll.getGroupId()));
+				pollList1.add(pollDash);
+			}
+			
+			if(pollList1.isEmpty()) {
+				
+				response.setError("0");
+				response.setMessage("user does not created any polls in last "+daysType);
+				response.setData(pollList1);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+			}
+			else {
+				
+				
+				response.setError("0");	
+				response.setMessage("successfully fetched of poll's of last "+daysType);
+				response.setData(pollList1);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+				
+			}
+		}
+	}
+	
+	
+	
+	@PostMapping("/getChatOfDashboard")
+	public ResponseEntity<ResponseObject> getChatDashBoard(@RequestParam(value = "userName", required = false) String  userName,
+			@RequestParam(value = "daysType", required = false) String  daysType) {
+		
+		if(userName == null) {
+			response.setError("1");
+			response.setMessage("'userName' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(daysType == null) {
+			response.setError("1");
+			response.setMessage("'daysType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+			try {
+				FirebaseOptions options = new FirebaseOptions.Builder()
+						.setCredentials(GoogleCredentials
+								.fromStream(new ClassPathResource("/craziapp-3c02b-firebase-adminsdk-rrs6o-3add9ace15.json").getInputStream()))
+						.setDatabaseUrl(FB_BASE_URL).build();
+				if (FirebaseApp.getApps().isEmpty()) {
+					FirebaseApp.initializeApp(options);
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+			FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+
+			
+			List<GroupPoll> pollList = new ArrayList<GroupPoll>();
+			
+			if(daysType=="WEEK" || "WEEK".equalsIgnoreCase(daysType)) {
+				
+				//pollList= getChatByUserNameandWeekType(userName, daysType);
+				
+			}else if(daysType=="MONTH" || "MONTH".equalsIgnoreCase(daysType)){
+				
+				//pollList= getChatByUserNameandMonthType(userName, daysType);
+				
+			}else {
+				
+				//pollList= getChatByUserNameandYearType(userName, daysType);
+				
+			}
+			
+			
+			
+			
+			// Get a reference to our posts
+			//final FirebaseDatabase database = FirebaseDatabase.getInstance();
+			DatabaseReference ref = database.getReference("chat");
+
+			// Attach a listener to read the data at our posts reference
+			
+			// final ChatUserDash chatting = new ChatUserDash();
+			List<Object> objectList = new ArrayList<Object>();
+			ref.addValueEventListener(new ValueEventListener() {
+			  @Override
+			  public void onDataChange(DataSnapshot dataSnapshot) {
+				   dataSnapshot.getValue();
+			    System.out.println("--------@@@ Chatting @@@------"+ dataSnapshot.getValue());
+			    
+			    response.setError("0");	
+				response.setMessage("successfully fetched of poll's of last "+daysType);
+				response.setData(dataSnapshot.getValue());
+				response.setStatus("SUCCESS");
+				objectList.add(dataSnapshot.getValue());
+				
+			  }
+
+			  @Override
+			  public void onCancelled(DatabaseError databaseError) {
+			    System.out.println("The read failed: " + databaseError.getCode());
+			    
+			    response.setError("0");	
+				response.setMessage("successfully fetched of poll's of last "+daysType);
+				response.setData(databaseError.getCode());
+				response.setStatus("SUCCESS");
+				objectList.add(databaseError.getCode());
+			  }
+			});
+			
+			//return ResponseEntity.ok(response);
+			/*Map<String, Object> groups = new HashMap<>();
+			groups.put(groupProfile.getGroupId().toString(), new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getMobilNumber(), "https://cdn.techgyd.com/Whatsapp-DP-for-Group-4.png"));
+		
+			//ref.child("group").setValueAsync("group", new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getUserName(), groupProfile.getGroupMember()));
+			//ref.getDatabase().getReference().push().c.getReferenceFromUrl(FB_BASE_URL).setValueAsync(groups);
+			database.getReference().child("groups").updateChildrenAsync(groups);
+
+			
+			String hql="FROM GroupProfile";
+			List<GroupProfile> groupList=entitymanager.createQuery(hql).getResultList();
+			
+			Map<Integer, String> groupName = new HashMap<Integer, String>();
+			Map<Integer, String> groupPro = new HashMap<Integer, String>();
+			
+			for(GroupProfile groupProfile :groupList) {
+				
+				groupName.put(groupProfile.getGroupId(), groupProfile.getDisplayName());
+				groupPro.put(groupProfile.getGroupId(), groupProfile.getCurrentProfile());
+			}
+			
+			List<PollDash> pollList1 = new ArrayList<PollDash>();
+			for(GroupPoll groupPoll: pollList) {
+				
+				PollDash pollDash = new PollDash();
+				//pollDash.setPollId(groupPoll.getPollId());
+				pollDash.setCreateDate(groupPoll.getCreateDate());
+				//pollDash.setPollName(groupPoll.getPollName());
+				//pollDash.setPollOptions(groupPoll.getPollOptions());
+				//pollDash.setExpiryDate(groupPoll.getExpiryDate());
+				//pollDash.setCreatedBy(groupPoll.getCreatedBy());
+				pollDash.setGroupId(groupPoll.getGroupId());
+				//pollDash.setPollStatus(groupPoll.getPollStatus());
+				pollDash.setGroupName(groupName.get(groupPoll.getGroupId()));
+				pollDash.setGroupProf(groupPro.get(groupPoll.getGroupId()));
+				pollList1.add(pollDash);
+			}
+			
+			if(chatting.isEmpty()) {
+				
+				response.setError("0");
+				response.setMessage("user does not created any polls in last "+daysType);
+				response.setData(chatting);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+			}
+			else {*/
+				
+				
+				response.setError("0");	
+				response.setMessage("successfully fetched of poll's of last "+daysType);
+				response.setData(objectList);
+				response.setStatus("SUCCESS");
+				return ResponseEntity.ok(response);
+				
+			//}
+		}
+	}
+	
+	@SuppressWarnings("unchecked")
+	@PostMapping("/getChatOfDashboardbySenderUser")
+	public ResponseEntity<ResponseObject> getChatDashResult(@RequestParam(value = "userId", required = false) Integer  userId,
+			@RequestParam(value = "groupId", required = false) Integer  groupId,
+			@RequestParam(value = "daysType", required = false) String  daysType) {
+		
+		if(userId == null) {
+			response.setError("1");
+			response.setMessage("'userId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(groupId == null) {
+			response.setError("1");
+			response.setMessage("'groupId' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else if(daysType == null) {
+			response.setError("1");
+			response.setMessage("'daysType' is empty or null please check");
+			response.setData(empty);
+			response.setStatus("FAIL");
+			
+			return ResponseEntity.ok(response);
+			
+		}else {
+			
+			List<GroupPoll> pollList = new ArrayList<GroupPoll>();
+			
+			if(daysType=="WEEK" || "WEEK".equalsIgnoreCase(daysType)) {
+				
+				//pollList= fileStorageService.getPollsByUserIdandWeekType(userId, daysType,groupId);
+				
+			}else if(daysType=="MONTH" || "MONTH".equalsIgnoreCase(daysType)){
+				
+				//pollList= fileStorageService.getPollsByUserIdandMonthType(userId, daysType,groupId);
+				
+			}else {
+				
+				//pollList= fileStorageService.getPollsByUserIdandYearType(userId, daysType,groupId);
+				
+			}
+			
+			String hql="FROM GroupProfile";
+			List<GroupProfile> groupList=entitymanager.createQuery(hql).getResultList();
+			
+			Map<Integer, String> groupName = new HashMap<Integer, String>();
+			
+			for(GroupProfile groupProfile :groupList) {
+				
+				groupName.put(groupProfile.getGroupId(), groupProfile.getDisplayName());
+			}
+			
+			List<PollResList> pollList1 = new ArrayList<PollResList>();
+			for(GroupPoll groupPoll: pollList) {
+				
+				PollResList pollDash = new PollResList();
+				pollDash.setPollId(groupPoll.getPollId());
+				//pollDash.setCreateDate(groupPoll.getCreateDate());
+				pollDash.setPollName(groupPoll.getPollName());
+				pollDash.setPollOptions(groupPoll.getPollOptions());
+				pollDash.setExpiryDate(groupPoll.getExpiryDate());
+				//pollDash.setCreatedBy(groupPoll.getCreatedBy());
+				//pollDash.setGroupId(groupPoll.getGroupId());
+				pollDash.setPollStatus(groupPoll.getPollStatus());
+				//pollDash.setGroupName(groupName.get(groupPoll.getGroupId()));
+				pollList1.add(pollDash);
+			}
+			
+			if(pollList1.isEmpty()) {
 				
 				response.setError("0");
 				response.setMessage("user does not created any polls in last "+daysType);
@@ -1000,7 +1623,7 @@ public class FileController {
 				
 				response.setError("0");	
 				response.setMessage("successfully fetched of poll's of last "+daysType);
-				response.setData(pollList);
+				response.setData(pollList1);
 				response.setStatus("SUCCESS");
 				return ResponseEntity.ok(response);
 				

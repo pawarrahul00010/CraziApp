@@ -169,6 +169,7 @@ DateUtil dateUtil;
 						
 					}
 					groupPoll.setPollOptions(optionsList);
+					groupPoll.setPollStatus("ACTIVE");
 				}
 				groupProfile.getGroupPolls().add(groupPoll);
 			}

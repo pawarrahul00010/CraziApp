@@ -132,7 +132,6 @@ public class GroupProfileController extends TimerTask {
 	private FileStorageService fileStorageService;
 
 	 
-		@SuppressWarnings("unchecked")
 		@PostMapping("/create")
 		public ResponseEntity<ResponseObject> createGroup(@RequestParam(value ="contactList", required=false) String contacts,
 				@RequestParam(value ="file", required=false) MultipartFile file, 
@@ -1404,7 +1403,7 @@ public class GroupProfileController extends TimerTask {
 	//@Scheduled(cron = "*/10 * * * * *")
 	public void schedulejob()
 	{
-		String status="exired";
+		String status="EXPIRED";
 		LocalDateTime currDate=LocalDateTime.now();
 		System.out.println(currDate);
 		entityManager.createNativeQuery("UPDATE group_poll SET poll_status=:status where expiry_date<= :currDate").setParameter("status", status).setParameter("currDate", currDate).executeUpdate();

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 public class Constant {
 
 	/**
-	 * Constant for Lunch Time.
+	 * Constant
 	 */
 	public static final String LIKE = "LIKED";
 	

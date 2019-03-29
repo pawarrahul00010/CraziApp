@@ -34,6 +34,7 @@ import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
 import com.technohertz.model.PendoraBox;
+import com.technohertz.model.SharedMedia;
 import com.technohertz.model.UserContact;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
@@ -306,6 +307,49 @@ public class FileStorageService {
 		}
 	
 	@SuppressWarnings("unchecked")
+	public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, String categoryType, HttpServletRequest request) {
+	
+			List<AdminProfile> adminProfile = adminProfileRepository.findByProfileId(adminId);
+		CardCategory cardCategory =new CardCategory();
+		MediaFiles mediaFiles =new MediaFiles();
+		String fileName = StringUtils
+				.cleanPath(String.valueOf(adminId) + System.currentTimeMillis() + getFileExtension(file));
+		String fileDownloadUri = ServletUriComponentsBuilder.fromCurrentContextPath()
+				.path("/downloadFile/")
+				.path(String.valueOf(fileName))
+				.toUriString();
+		
+		if (fileName.contains("..")) {
+			throw new FileStorageException("Sorry! Filename contains invalid path sequence " + file);
+		}
+		
+		
+				if (!adminProfile.isEmpty()) {
+					cardCategory.setCategoryName(categoryName);
+					cardCategory.setCategoryType("POSTCARD");
+					cardCategory.setFilePath(fileDownloadUri);
+					cardCategory.setCreatedDate(dateUtil.getDate());
+					adminProfile.get(0).getCardCategories().add(cardCategory);
+					mediaFiles.setFilePath(fileDownloadUri);
+					mediaFiles.setFileType("POSTCARD");
+					mediaFiles.setCreateDate(dateUtil.getDate());
+					cardCategory.setProfile(adminProfile.get(0));
+					adminProfile.get(0).getFiles().add(mediaFiles);
+					
+					Path targetLocation = this.fileStorageLocation.resolve(fileName);
+					try {
+						Files.copy(file.getInputStream(), targetLocation, StandardCopyOption.REPLACE_EXISTING);
+					} catch (IOException e) {
+						throw new FileStorageException("Could not store file " + fileName + ". Please try again!", e);
+					}
+					}else {
+						
+						return null;
+					}
+				return adminProfileRepository.save(adminProfile.get(0));
+	  }
+	
+	@SuppressWarnings("unchecked")
 	public AdminProfile storeCards(MultipartFile file, Integer adminId, String categoryName, HttpServletRequest request) {
 	
 			List<AdminProfile> adminProfile = adminProfileRepository.findByProfileId(adminId);
@@ -347,6 +391,7 @@ public class FileStorageService {
 					}
 				return adminProfileRepository.save(adminProfile.get(0));
 	  }
+
 	
 	@SuppressWarnings("unchecked")
 	public AdminProfile storeGreatCards(MultipartFile file, Integer adminId, String categoryName,
@@ -814,20 +859,20 @@ public class FileStorageService {
 		
 
 			@SuppressWarnings("unchecked")
-			public List<MediaFiles> getmediaByUserIdandMediaTypeandWeekType(Integer userId, String mediaType, String daysType) {
+			public List<SharedMedia> getmediaByUserIdandMediaTypeandWeekType(Integer userId, String mediaType, String daysType) {
 			
-				return entityManager.createNativeQuery("select * from media_files where usr_det_id=:userId and file_type=:mediaType and file_create_date >=:daysfrom and file_create_date <=:daysUpto ",MediaFiles.class)
+				return entityManager.createNativeQuery("select * from shared_media where (form_user=:userId or to_user=:userId ) and file_type=:mediaType and share_date >=:daysfrom and share_date <=:daysUpto  group by to_user",SharedMedia.class)
 				.setParameter("userId", userId)
 				.setParameter("mediaType", mediaType)
-				.setParameter("daysfrom", LocalDateTime.now().minusDays(7))
+				.setParameter("daysfrom", LocalDateTime.now().minusWeeks(1))
 				.setParameter("daysUpto", LocalDateTime.now())
 				.getResultList();
 				
 			}
 			@SuppressWarnings("unchecked")
-			public List<MediaFiles> getmediaByUserIdandMediaTypeandMonthType(Integer userId, String mediaType, String daysType) {
+			public List<SharedMedia> getmediaByUserIdandMediaTypeandMonthType(Integer userId, String mediaType, String daysType) {
 			
-				return entityManager.createNativeQuery("select * from media_files where usr_det_id=:userId and file_type=:mediaType and file_create_date >=:daysfrom and file_create_date <=:daysUpto ",MediaFiles.class)
+				return entityManager.createNativeQuery("select * from shared_media where (form_user=:userId or to_user=:userId ) and file_type=:mediaType and share_date >=:daysfrom and share_date <=:daysUpto  group by to_user",SharedMedia.class)
 						.setParameter("userId", userId)
 						.setParameter("mediaType", mediaType)
 						.setParameter("daysfrom", LocalDateTime.now().minusMonths(1))
@@ -836,19 +881,59 @@ public class FileStorageService {
 				
 			}
 			@SuppressWarnings("unchecked")
-			public List<MediaFiles> getmediaByUserIdandMediaTypeandYearType(Integer userId, String mediaType, String daysType) {
+			public List<SharedMedia> getmediaByUserIdandMediaTypeandYearType(Integer userId, String mediaType, String daysType) {
 				
-				return entityManager.createNativeQuery("select * from media_files where usr_det_id=:userId and file_type=:mediaType and file_create_date >=:daysfrom and file_create_date <=:daysUpto ",MediaFiles.class)
+				return entityManager.createNativeQuery("select * from shared_media where (form_user=:userId or to_user=:userId ) and file_type=:mediaType and share_date >=:daysfrom and share_date <=:daysUpto  group by to_user",SharedMedia.class)
 						.setParameter("userId", userId)
 						.setParameter("mediaType", mediaType)
 						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
 						.setParameter("daysUpto", LocalDateTime.now())
 						.getResultList();
 			}
+			
+			
+			@SuppressWarnings("unchecked")
+			public List<SharedMedia> getmediaByUserIdandMediaTypeandWeekType(Integer userId, String mediaType,
+					String daysType, Integer toUserId) {
+				
+				return entityManager.createNativeQuery("select * from shared_media where form_user=:userId and file_type=:mediaType and share_date >=:daysfrom and share_date <=:daysUpto ",SharedMedia.class)
+						.setParameter("userId", userId)
+						//.setParameter("toUserId", toUserId)
+						.setParameter("mediaType", mediaType)
+						.setParameter("daysfrom", LocalDateTime.now().minusWeeks(1))
+						.setParameter("daysUpto", LocalDateTime.now())
+						.getResultList();
+			}
+			@SuppressWarnings("unchecked")
+			public List<SharedMedia> getmediaByUserIdandMediaTypeandMonthType(Integer userId, String mediaType,
+					String daysType, Integer toUserId) {
+				
+				return entityManager.createNativeQuery("select * from shared_media where form_user=:userId and file_type=:mediaType and share_date >=:daysfrom and share_date <=:daysUpto ",SharedMedia.class)
+						.setParameter("userId", userId)
+						.setParameter("mediaType", mediaType)
+						.setParameter("daysfrom", LocalDateTime.now().minusMonths(1))
+						.setParameter("daysUpto", LocalDateTime.now())
+						.getResultList();
+			}
+			@SuppressWarnings("unchecked")
+			public List<SharedMedia> getmediaByUserIdandMediaTypeandYearType(Integer userId, String mediaType,
+					String daysType, Integer toUserId) {
+				
+				return entityManager.createNativeQuery("select * from shared_media where form_user=:userId and file_type=:mediaType and share_date >=:daysfrom and share_date <=:daysUpto",SharedMedia.class)
+						.setParameter("userId", userId)
+						.setParameter("mediaType", mediaType)
+						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+						.setParameter("daysUpto", LocalDateTime.now())
+						.getResultList();
+			}
+			
+			
+			
+			
 			@SuppressWarnings("unchecked")
 			public List<GroupPoll> getPollsByUserIdandWeekType(Integer userId, String daysType) {
 			
-				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto group by group_id",GroupPoll.class)
 						.setParameter("userId", userId)
 						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
 						.setParameter("daysUpto", LocalDateTime.now())
@@ -857,7 +942,7 @@ public class FileStorageService {
 			@SuppressWarnings("unchecked")
 			public List<GroupPoll> getPollsByUserIdandMonthType(Integer userId, String daysType) {
 			
-				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto group by group_id",GroupPoll.class)
 						.setParameter("userId", userId)
 						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
 						.setParameter("daysUpto", LocalDateTime.now())
@@ -866,8 +951,39 @@ public class FileStorageService {
 			@SuppressWarnings("unchecked")
 			public List<GroupPoll> getPollsByUserIdandYearType(Integer userId, String daysType) {
 			
-				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId  and create_date >=:daysfrom and create_date <=:daysUpto group by group_id",GroupPoll.class)
 						.setParameter("userId", userId)
+						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+						.setParameter("daysUpto", LocalDateTime.now())
+						.getResultList();
+			}
+			
+			@SuppressWarnings("unchecked")
+			public List<GroupPoll> getPollsByUserIdandWeekType(Integer userId, String daysType, Integer groupId) {
+				
+				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId and group_id=:groupId and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+						.setParameter("userId", userId)
+						.setParameter("groupId", groupId)
+						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+						.setParameter("daysUpto", LocalDateTime.now())
+						.getResultList();
+			}
+			@SuppressWarnings("unchecked")
+			public List<GroupPoll> getPollsByUserIdandMonthType(Integer userId, String daysType, Integer groupId) {
+				
+				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId and group_id=:groupId and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+						.setParameter("userId", userId)
+						.setParameter("groupId", groupId)
+						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+						.setParameter("daysUpto", LocalDateTime.now())
+						.getResultList();
+			}
+			@SuppressWarnings("unchecked")
+			public List<GroupPoll> getPollsByUserIdandYearType(Integer userId, String daysType, Integer groupId) {
+				
+				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId and group_id=:groupId and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
+						.setParameter("userId", userId)
+						.setParameter("groupId", groupId)
 						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
 						.setParameter("daysUpto", LocalDateTime.now())
 						.getResultList();
