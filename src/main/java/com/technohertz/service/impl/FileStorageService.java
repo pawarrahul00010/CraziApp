@@ -974,7 +974,7 @@ public class FileStorageService {
 				return entityManager.createNativeQuery("select * from group_poll where created_by=:userId and group_id=:groupId and create_date >=:daysfrom and create_date <=:daysUpto ",GroupPoll.class)
 						.setParameter("userId", userId)
 						.setParameter("groupId", groupId)
-						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
+						.setParameter("daysfrom", LocalDateTime.now().minusMonths(1))
 						.setParameter("daysUpto", LocalDateTime.now())
 						.getResultList();
 			}
@@ -987,6 +987,18 @@ public class FileStorageService {
 						.setParameter("daysfrom", LocalDateTime.now().minusYears(1))
 						.setParameter("daysUpto", LocalDateTime.now())
 						.getResultList();
+			}
+			
+			@SuppressWarnings("unchecked")
+			public List<Integer> getPolldetails(Integer userId, Integer groupId)
+{
+				return entityManager.createNativeQuery("select contact_id from poll_likes WHERE like_status=true").getResultList();
+	
+	}
+			@SuppressWarnings("unchecked")
+			public List<Integer> getContactIdList(Integer groupId)
+			{
+				return entityManager.createNativeQuery("select contact_id from group_profile_group_member where group_id=:groupId").setParameter("groupId", groupId).getResultList();
 			}
 
 }

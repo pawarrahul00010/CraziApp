@@ -95,7 +95,7 @@ public class GroupPoll implements Serializable {
 	}
 
 	@OneToMany(cascade = javax.persistence.CascadeType.ALL, fetch = FetchType.LAZY)
-	@JoinColumn(name = "POLL_ID")
+	@JoinColumn(name = "G_POLL_ID")
 	private List<PollOption> pollOptions = new ArrayList<PollOption>();
 
 	public Integer getPollId() {

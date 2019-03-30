@@ -6,12 +6,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimerTask;
+import java.util.TreeSet;
 
 import javax.persistence.EntityManager;
-import javax.servlet.ServletContext;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpSession;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +51,7 @@ import com.technohertz.repo.MediaFileRepo;
 import com.technohertz.repo.PollLikesRepository;
 import com.technohertz.repo.PolloptionRepository;
 import com.technohertz.repo.UserContactRepository;
+import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.IGroupProfileService;
 import com.technohertz.service.IMediaFileService;
@@ -60,6 +61,8 @@ import com.technohertz.service.impl.FileStorageService;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GroupFirebase;
 import com.technohertz.util.GroupResponse;
+import com.technohertz.util.LikedUserOfPOll;
+import com.technohertz.util.PollLikeResponce;
 import com.technohertz.util.PollOptionResponce;
 import com.technohertz.util.PollResponce;
 import com.technohertz.util.ResponseObject;
@@ -108,6 +111,8 @@ public class GroupProfileController extends TimerTask {
 
 	@Autowired
 	private UserRegisterRepository registerRepository;
+	@Autowired
+	UserProfileRepository   userProfileRepository;
 	
 	@Autowired
 	private UserContactRepository contactRepository;
@@ -1408,8 +1413,73 @@ public class GroupProfileController extends TimerTask {
 		System.out.println(currDate);
 		entityManager.createNativeQuery("UPDATE group_poll SET poll_status=:status where expiry_date<= :currDate").setParameter("status", status).setParameter("currDate", currDate).executeUpdate();
 	}
-	
-	
+
+	@SuppressWarnings("unused")
+	@PostMapping("/getPollDetails")
+	public List<LikedUserOfPOll> getPollDetails(@RequestParam("groupId") Integer groupId,
+			@RequestParam("userId") Integer userId, @RequestParam("daysType") String daysType) {
+		
+		
+		
+		
+		Map<Integer, String> pollname = new HashMap<Integer, String>();
+		List<GroupPoll> groupPoll = fileStorageService.getPollsByUserIdandMonthType(userId, daysType, groupId);
+		List<GroupPoll> groupPolls = groupPollRepository.findAllBycreatedBy(userId);
+		for (GroupPoll poll : groupPolls) {
+			pollname.put(poll.getCreatedBy(), poll.getPollName());
+		}
+		
+		
+		Set<Integer> contact = new TreeSet<Integer>();
+		Set<Integer> conList = new TreeSet<Integer>();
+		for (GroupPoll poll : groupPoll) {
+			for (PollOption option : poll.getPollOptions()) {
+				for (PollLikes pollLikes : option.getPollLikes()) {
+
+					contact.add(pollLikes.getContactId());
+					pollname.put(poll.getCreatedBy(), poll.getPollName());
+				}
+			}
+		}
+		
+		
+		List<UserContact> userProfiles = userContactRepository.findAll();
+		List<Integer> contactList = fileStorageService.getContactIdList(groupId);
+		for (Integer con : contactList) {
+			if (!contact.contains(con)) {//add ! here
+				conList.add(con);
+			}
+		}
+		
+		
+		Map<Integer, String> userMap = new HashMap<Integer, String>();
+		for (UserContact user : userProfiles) {
+			userMap.put(user.getContactId(), user.getContactName());
+		}
+		
+		
+		Set<Integer> id = userMap.keySet();
+		List<String> name = new ArrayList<String>();
+		for (Integer userid : conList) {
+			if (contact.contains(userid)) {
+				String userName = userMap.get(userid);
+				name.add(userName);
+				System.out.println(userName);
+			}
+		}
+		
+		
+		List<LikedUserOfPOll> polls=new ArrayList<LikedUserOfPOll>();
+		for (GroupPoll poll : groupPolls) {
+			LikedUserOfPOll userOfPoll = new LikedUserOfPOll();
+			userOfPoll.setPollName(poll.getPollName());
+			userOfPoll.setUserName(name);
+			polls.add(userOfPoll);
+		}
+
+		return polls;
+	}
+
 	@GetMapping("/getPoll")
 	public ResponseEntity<ResponseObject> getPollsByPollId(@RequestParam("optionId") Integer optionId)
 	{

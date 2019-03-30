@@ -484,7 +484,6 @@ public class UserRegisterController {
 			}
 		}
 		
-	
 
 		@Cacheable(value="mobileNumberCache",key="#mobileNumber",unless="#result==null")
 		private boolean userExists(String mobileNumber)

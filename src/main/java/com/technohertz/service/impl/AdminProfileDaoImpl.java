@@ -1,7 +1,6 @@
 package com.technohertz.service.impl;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,13 +28,10 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.technohertz.exception.FileStorageException;
 import com.technohertz.exception.MyFileNotFoundException;
-import com.technohertz.model.AdminProfile;
 import com.technohertz.model.AdminRegister;
 import com.technohertz.model.CardCategory;
 import com.technohertz.model.Cards;
-import com.technohertz.model.MediaFiles;
 import com.technohertz.model.UserRegister;
 import com.technohertz.repo.AdminProfileRepository;
 import com.technohertz.repo.AdminRegisterRepository;
@@ -138,6 +134,8 @@ public class AdminProfileDaoImpl implements IAdminDao {
 	Date date = Calendar.getInstance().getTime();
 	@Override
 	public AdminRegister saveAdmin(String firstName, String lastName, String email, String password) {
+	
+		
 		AdminRegister adminRegister =new AdminRegister();
 		adminRegister.setFirstName(firstName);
 		adminRegister.setLastName(lastName);

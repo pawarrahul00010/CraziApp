@@ -14,6 +14,9 @@ public interface GroupPollRepository extends JpaRepository<GroupPoll, Integer>{
 	@Query("SELECT p from GroupPoll p where p.pollId=?1")
 	List<GroupPoll> findAllByPollId(Integer pollId);
 
+	@Query("SELECT p from GroupPoll p where p.createdBy=?1")
+	List<GroupPoll> findAllBycreatedBy(Integer createdBy);
+
 
 }
 
