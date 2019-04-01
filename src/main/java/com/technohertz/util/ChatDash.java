@@ -15,6 +15,8 @@ public class ChatDash implements Serializable {
 	private String time;
 	
 	private String timestamp;
+	
+	private String chatKey;
 
 	public String getMessage() {
 		return message;
@@ -40,12 +42,21 @@ public class ChatDash implements Serializable {
 		this.time = time;
 	}
 
+
 	public String getTimestamp() {
 		return timestamp;
 	}
 
-	public void setTimestamp(String timestamp) {
-		this.timestamp = timestamp;
+	public void setTimestamp(String string) {
+		this.timestamp = string;
+	}
+
+	public String getChatKey() {
+		return chatKey;
+	}
+
+	public void setChatKey(String chatKey) {
+		this.chatKey = chatKey;
 	}
 
 

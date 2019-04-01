@@ -2,17 +2,21 @@ package com.technohertz;
 
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +25,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,25 +47,35 @@ import com.technohertz.common.Constant;
 import com.technohertz.model.CardBookmarkUsers;
 import com.technohertz.model.CardCategory;
 import com.technohertz.model.Cards;
+import com.technohertz.model.Chat;
+import com.technohertz.model.ChatUser;
 import com.technohertz.model.Empty;
 import com.technohertz.model.GetImage;
 import com.technohertz.model.GroupPoll;
 import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
 import com.technohertz.model.MediaFiles;
+import com.technohertz.model.PollLikes;
+import com.technohertz.model.PollOption;
 import com.technohertz.model.SharedMedia;
+import com.technohertz.model.UserContact;
 import com.technohertz.model.UserProfile;
 import com.technohertz.model.UserRegister;
 import com.technohertz.payload.UploadFileResponse;
+import com.technohertz.repo.GroupPollRepository;
 import com.technohertz.repo.MediaFileRepo;
+import com.technohertz.repo.UserContactRepository;
 import com.technohertz.repo.UserProfileRepository;
 import com.technohertz.repo.UserRegisterRepository;
 import com.technohertz.service.ICardService;
 import com.technohertz.service.IMediaFileService;
+import com.technohertz.service.IUserChatService;
 import com.technohertz.service.IUserRegisterService;
 import com.technohertz.service.impl.FileStorageService;
+import com.technohertz.util.ChatDash;
 import com.technohertz.util.CommonUtil;
 import com.technohertz.util.DateUtil;
+import com.technohertz.util.LikedUserOfPOll;
 import com.technohertz.util.MediaDash;
 import com.technohertz.util.MediaDashResponse;
 import com.technohertz.util.PollDash;
@@ -74,14 +89,19 @@ public class FileController {
 	
 	@Autowired
 	private DateUtil dateUtil;
-
-
+	@Autowired
+	GroupPollRepository groupPollRepository;
+	@Autowired
+	UserContactRepository userContactRepository;
 	@Autowired
 	private UserProfileRepository userProfileRepository;
     private static final Logger logger = LoggerFactory.getLogger(FileController.class);
     
 	@Autowired
 	private MediaFileRepo mediaFileRepo;
+	
+	@Autowired
+	private IUserChatService userChatService;
 	
 	@Autowired
 	private EntityManager entitymanager;
@@ -106,6 +126,8 @@ public class FileController {
 		
 	@Autowired
 	private CommonUtil commonUtil;
+	
+	Object object = new Object();
 
     @Autowired
 	private ResponseObject response;
@@ -909,9 +931,15 @@ public class FileController {
 		}
 	}
 	
-	
+	/*
+	 * @PostMapping("getSortedChat") public void
+	 * getSortedChatMessage(@RequestParam("userName") String userName,) {
+	 * 
+	 * }
+	 */
 	@SuppressWarnings({ "unchecked" })
 	@PostMapping("/getmediaOfDashboard")
+
 	public ResponseEntity<ResponseObject> getMediaDashBoard(@RequestParam(value = "userId", required = false) Integer  userId,
 			@RequestParam(value = "mediaType", required = false) String  mediaType,
 			@RequestParam(value = "daysType", required = false) String  daysType) {
@@ -1384,9 +1412,56 @@ public class FileController {
 	}
 	
 	
+	  @PostMapping("/getSortedChat") 
+	  public ResponseEntity<ResponseObject> getSortedChatMessage(@RequestParam("userName") String userName,@RequestParam("dayType") String dayType) {
+	  System.out.println("---------------------");
+		
+	  List<Chat> chats=new ArrayList<Chat>();
+	  List<ChatDash> dash=new ArrayList<ChatDash>();
+	  if(dayType.equalsIgnoreCase("YEAR")) {
+		  chats =  fileStorageService.getchatDataByYear(userName,dayType);
+		  dash =new ArrayList<ChatDash>();
+	  }
+	  else if(dayType.equalsIgnoreCase("MONTH"))
+	  {
+		  chats =  fileStorageService.getchatDataByMonth(userName,dayType);
+		  dash =new ArrayList<ChatDash>();
+	  }else if(dayType.equalsIgnoreCase("WEEK"))
+	  {
+		  chats =  fileStorageService.getchatDataByWeek(userName,dayType);
+		  dash =new ArrayList<ChatDash>();
+	  }
+	for(Chat chat :chats)
+	{
+		ChatDash chatDash=new ChatDash();
+		byte[] msg=Base64.decodeBase64(chat.getMessage().getBytes());
+		String decodedString = new String(msg);
+		chatDash.setMessage(decodedString);
+		chatDash.setTime(chat.getTime());
+		chatDash.setTimestamp(chat.getTimestamp());
+		chatDash.setUser(chat.getUser());
+		chatDash.setChatKey(chat.getChatKey());
+		dash.add(chatDash);
+	}
+if(!dash.isEmpty())
+{
+	response.setError("0");	
+	response.setMessage("successfully fetched of poll's of last "+dayType);
+	response.setData(dash);
+	response.setStatus("SUCCESS");
+	return ResponseEntity.ok(response);
+	}
+else {
+	response.setError("1");
+	response.setMessage("'daysType' is empty or null please check");
+	response.setData(empty);
+	response.setStatus("FAIL");
 	
+	return ResponseEntity.ok(response);
+}
+	  }
 	@PostMapping("/getChatOfDashboard")
-	public ResponseEntity<ResponseObject> getChatDashBoard(@RequestParam(value = "userName", required = false) String  userName,
+	public ResponseEntity<ResponseObject> getChatDashBoarddata(@RequestParam(value = "userName", required = false) String  userName,
 			@RequestParam(value = "daysType", required = false) String  daysType) {
 		
 		if(userName == null) {
@@ -1440,7 +1515,7 @@ public class FileController {
 			}
 			
 			
-			
+		
 			
 			// Get a reference to our posts
 			//final FirebaseDatabase database = FirebaseDatabase.getInstance();
@@ -1449,18 +1524,85 @@ public class FileController {
 			// Attach a listener to read the data at our posts reference
 			
 			// final ChatUserDash chatting = new ChatUserDash();
-			List<Object> objectList = new ArrayList<Object>();
+			final Object obj = new Object();
+			List<com.technohertz.model.Chat> chatList = new ArrayList<com.technohertz.model.Chat>();
+			ChatUser chatUser = new ChatUser();
+			
 			ref.addValueEventListener(new ValueEventListener() {
-			  @Override
+				
+			  @SuppressWarnings("unchecked")
+			@Override
 			  public void onDataChange(DataSnapshot dataSnapshot) {
+				  
+				  dataSnapshot.getChildren().toString();
+				 // System.out.println(dataSnapshot.getValue().toString());
+				  
+				  for (DataSnapshot messageSnapshot: dataSnapshot.getChildren()) {
+			            //Object o= messageSnapshot.getValue();
+			            //String message = (String) messageSnapshot.child("message").getValue();
+					  List<com.technohertz.model.Chat> chatList = new ArrayList<com.technohertz.model.Chat>();
+					  	ChatUser chatUser = new ChatUser();
+			            for(DataSnapshot msgList:messageSnapshot.getChildren()) {
+			            	
+			            	com.technohertz.model.Chat chat = new com.technohertz.model.Chat();
+			            	
+			            	for(DataSnapshot obj:msgList.getChildren()) {
+			            		
+			            		if(obj.getKey().equals("time")) {
+			            			
+			            			chat.setTime((String)obj.getValue().toString());
+			            		}
+			            		if(obj.getKey().equals("message")) {
+			            			
+			            			doEncode(obj.getValue().toString());
+			            			
+			            			chat.setMessage((String)doEncode(obj.getValue().toString()));
+			            			//chat.setMessage((String)obj.getValue().toString());
+			            		}
+			            		if(obj.getKey().equals("timestamp")) {
+			            			
+			            			chat.setTimestamp((String)obj.getValue().toString());
+			            		}
+			            		if(obj.getKey().equals("user")) {
+			            			
+			            			chat.setUser((String)obj.getValue().toString());
+			            		}
+			            		
+				            }
+			            	//System.out.println(chat.toString());
+			            	chat.setChatKey(msgList.getKey().toString());
+			            	chatList.add(chat);
+			            	userChatService.save(chat);
+			            }
+			            chatUser.setChatList(chatList);
+			            chatUser.setUserName(messageSnapshot.getKey());
+			            userChatService.saveChat(chatUser);
+			        }
+				  
+				  //Object obj=dataSnapshot.getValue();
+				  
+				  //System.out.println("--------@@@ Chatting @@@------"+ dataSnapshot.getValue());
+				//  System.out.println("----------------------------------------------------------------");
+				 // Object object =   dataSnapshot.getValue();
+				//  chatList.add(dataSnapshot.getValue());
+				 // System.out.println(object);
+				 // System.out.println("----------------------------------------------------------------");
+				  //ChatUserFirebase chatUser =  (ChatUserFirebase) object;
+				//object = obj;
+				  //System.out.println("----------------***********"+chatUser);
+				  //session.setAttribute("UserChat", obj);
+				 // System.out.println(object);
 				   dataSnapshot.getValue();
-			    System.out.println("--------@@@ Chatting @@@------"+ dataSnapshot.getValue());
+				   //System.out.println("--------@@@ Chatting @@@------"+ chatUser);
+				  // obj = object;
+				   
+			   // System.out.println("--------@@@ Chatting @@@------"+ dataSnapshot.getValue(Chat.class));
 			    
 			    response.setError("0");	
 				response.setMessage("successfully fetched of poll's of last "+daysType);
 				response.setData(dataSnapshot.getValue());
 				response.setStatus("SUCCESS");
-				objectList.add(dataSnapshot.getValue());
+				//objectList.add(dataSnapshot.getValue());
 				
 			  }
 
@@ -1472,17 +1614,17 @@ public class FileController {
 				response.setMessage("successfully fetched of poll's of last "+daysType);
 				response.setData(databaseError.getCode());
 				response.setStatus("SUCCESS");
-				objectList.add(databaseError.getCode());
+				//objectList.add(databaseError.getCode());
 			  }
 			});
 			
 			//return ResponseEntity.ok(response);
-			/*Map<String, Object> groups = new HashMap<>();
+		/*	Map<String, Object> groups = new HashMap<>();
 			groups.put(groupProfile.getGroupId().toString(), new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getMobilNumber(), "https://cdn.techgyd.com/Whatsapp-DP-for-Group-4.png"));
-		
+		*/
 			//ref.child("group").setValueAsync("group", new GroupFirebase(groupProfile.getGroupId(), groupProfile.getDisplayName(), userRegister.getUserName(), groupProfile.getGroupMember()));
 			//ref.getDatabase().getReference().push().c.getReferenceFromUrl(FB_BASE_URL).setValueAsync(groups);
-			database.getReference().child("groups").updateChildrenAsync(groups);
+			//database.getReference().child("groups").updateChildrenAsync(groups);
 
 			
 			String hql="FROM GroupProfile";
@@ -1512,29 +1654,129 @@ public class FileController {
 				pollDash.setGroupName(groupName.get(groupPoll.getGroupId()));
 				pollDash.setGroupProf(groupPro.get(groupPoll.getGroupId()));
 				pollList1.add(pollDash);
-			}
-			
-			if(chatting.isEmpty()) {
-				
-				response.setError("0");
-				response.setMessage("user does not created any polls in last "+daysType);
-				response.setData(chatting);
-				response.setStatus("SUCCESS");
-				return ResponseEntity.ok(response);
-			}
-			else {*/
-				
-				
-				response.setError("0");	
-				response.setMessage("successfully fetched of poll's of last "+daysType);
-				response.setData(objectList);
-				response.setStatus("SUCCESS");
-				return ResponseEntity.ok(response);
-				
-			//}
-		}
-	}
+			}}
+		return null;
 	
+				//Object obj = session.getAttribute("UserChat");
+			
+				//ChatUser chatUser1 = new ChatUser();
+				//System.out.println(object);
+				//ChatUser chatUser = (ChatUser)object;
+				//chatUser1.setUserId(chatUser.getUserId());
+				//chatUser1.setChatList(chatUser.getChatList());
+			
+				//ChatUser savedUserChat = userChatService.saveChat( chatUser);
+				
+//				response.setError("0");	
+//				response.setMessage("successfully fetched of poll's of last "+daysType);
+//				response.setData(chatList);
+//				response.setStatus("SUCCESS");
+//				return ResponseEntity.ok(response);
+//				
+//			//}
+//		}
+	}
+
+	
+	 
+/*	
+ *///@Scheduled(cron="*/10 * * * * *")
+/*
+	public void getChatDashBoard() {
+
+		try {
+			FirebaseOptions options = new FirebaseOptions.Builder().setCredentials(GoogleCredentials.fromStream(
+					new ClassPathResource("/craziapp-3c02b-firebase-adminsdk-rrs6o-3add9ace15.json").getInputStream()))
+					.setDatabaseUrl(FB_BASE_URL).build();
+			if (FirebaseApp.getApps().isEmpty()) {
+				FirebaseApp.initializeApp(options);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+		FirebaseDatabase database = FirebaseDatabase.getInstance();
+
+		List<GroupPoll> pollList = new ArrayList<GroupPoll>();
+
+		// Get a reference to our posts
+		// final FirebaseDatabase database = FirebaseDatabase.getInstance();
+		DatabaseReference ref = database.getReference("chat");
+
+		// Attach a listener to read the data at our posts reference
+
+		// final ChatUserDash chatting = new ChatUserDash();
+		final Object obj = new Object();
+		List<com.technohertz.model.Chat> chatList = new ArrayList<com.technohertz.model.Chat>();
+		ChatUser chatUser = new ChatUser();
+
+		ref.addValueEventListener(new ValueEventListener() {
+
+			@SuppressWarnings("unchecked")
+			@Override
+			public void onDataChange(DataSnapshot dataSnapshot) {
+
+				dataSnapshot.getChildren().toString();
+				// System.out.println(dataSnapshot.getValue().toString());
+
+				for (DataSnapshot messageSnapshot : dataSnapshot.getChildren()) {
+					// Object o= messageSnapshot.getValue();
+					// String message = (String) messageSnapshot.child("message").getValue();
+					List<com.technohertz.model.Chat> chatList = new ArrayList<com.technohertz.model.Chat>();
+					ChatUser chatUser = new ChatUser();
+					for (DataSnapshot msgList : messageSnapshot.getChildren()) {
+
+						com.technohertz.model.Chat chat = new com.technohertz.model.Chat();
+
+						for (DataSnapshot obj : msgList.getChildren()) {
+
+							if (obj.getKey().equals("time")) {
+
+								chat.setTime((String) obj.getValue().toString());
+							}
+							if (obj.getKey().equals("message")) {
+
+								doEncode(obj.getValue().toString());
+
+								chat.setMessage((String) doEncode(obj.getValue().toString()));
+								// chat.setMessage((String)obj.getValue().toString());
+							}
+							if (obj.getKey().equals("timestamp")) {
+								String date = (String) obj.getValue().toString();
+								chat.setTimestamp(LocalDateTime.parse(date));
+							}
+							if (obj.getKey().equals("user")) {
+
+								chat.setUser((String) obj.getValue().toString());
+							}
+
+						}
+						// System.out.println(chat.toString());
+						chat.setChatKey(msgList.getKey().toString());
+						chatList.add(chat);
+						// userChatService.save(chat);
+					}
+					chatUser.setChatList(chatList);
+					chatUser.setUserName(messageSnapshot.getKey());
+					userChatService.saveChat(chatUser);
+				}
+
+			}
+
+			@Override
+			public void onCancelled(DatabaseError databaseError) {
+				System.out.println("The read failed: " + databaseError.getCode());
+
+			}
+		});
+
+	}*/
+	
+	public String doEncode(String nrml){
+		byte[] arr=Base64.encodeBase64(nrml.getBytes());
+		return new String(arr);
+	}
+
 	@SuppressWarnings("unchecked")
 	@PostMapping("/getChatOfDashboardbySenderUser")
 	public ResponseEntity<ResponseObject> getChatDashResult(@RequestParam(value = "userId", required = false) Integer  userId,
@@ -1628,5 +1870,96 @@ public class FileController {
 				
 			}
 		}
+	}
+	
+	
+	@SuppressWarnings("unused")
+	@PostMapping("/getPollDetails")
+	public ResponseEntity<ResponseObject> getPollDetails(@RequestParam("groupId") Integer groupId,
+	@RequestParam("userId") Integer userId, @RequestParam("daysType") String daysType) {
+	/*
+	* System.out.println("----------------------------------"); return
+	* entityManager.
+	createNativeQuery(" select from poll_likes as pl left join poll_option as po on pl.p_option_id=po.option_id left join group_poll as gp on po.g_poll_id=gp.poll_id left join user_contact as uc on pl.PL_CONTACT_ID=uc.contact_id"
+	* ).getResultList();
+	*/	
+
+	Map<Integer, String> pollname = new HashMap<Integer, String>();
+	List<GroupPoll> groupPoll = fileStorageService.getPollsByUserIdandMonthType(userId, daysType, groupId);
+	List<GroupPoll> groupPolls = groupPollRepository.findAllBycreatedBy(userId);
+	for (GroupPoll poll : groupPolls) {
+	pollname.put(poll.getCreatedBy(), poll.getPollName());
+	}
+
+
+	Set<Integer> contact = new TreeSet<Integer>();
+	Set<Integer> conList = new TreeSet<Integer>();
+	for (GroupPoll poll : groupPoll) {
+	for (PollOption option : poll.getPollOptions()) {
+	for (PollLikes pollLikes : option.getPollLikes()) {
+
+	contact.add(pollLikes.getContactId());
+	pollname.put(poll.getCreatedBy(), poll.getPollName());
+	}
+	}
+	}
+
+
+	List<UserContact> userProfiles = userContactRepository.findAll();
+	List<Integer> contactList = fileStorageService.getContactIdList(groupId);
+	for (Integer con : contactList) {
+	if (!contact.contains(con)) {//add ! here
+	conList.add(con);
+	}
+	}
+
+
+	Map<Integer, String> userMap = new HashMap<Integer, String>();
+	for (UserContact user : userProfiles) {
+	userMap.put(user.getContactId(), user.getContactName());
+	}
+
+
+	Set<Integer> id = userMap.keySet();
+	List<String> name = new ArrayList<String>();
+	for (Integer userid : conList) {
+	if (!contact.contains(userid)) {
+	String userName = userMap.get(userid);
+	name.add(userName);
+	System.out.println(userName);
+	}
+	}
+
+
+	List<LikedUserOfPOll> polls=new ArrayList<LikedUserOfPOll>();
+	for (GroupPoll poll : groupPolls) {
+	LikedUserOfPOll userOfPoll = new LikedUserOfPOll();
+	userOfPoll.setPollName(poll.getPollName());
+	userOfPoll.setUserLikesList(name);
+	userOfPoll.setGroupId(groupId);
+	userOfPoll.setPollId(poll.getPollId());
+	userOfPoll.setCreatedDate(poll.getCreateDate());
+	userOfPoll.setPollStatus(poll.getPollStatus());
+	polls.add(userOfPoll);
+	}
+	if(!polls.isEmpty())
+	{
+
+	response.setError("0");
+	response.setMessage("poll are fetched successfully");
+	response.setData(polls);
+	response.setStatus("SUCCESS");
+	return ResponseEntity.ok(response);
+	}
+	else
+	{
+
+	response.setError("1");
+	response.setMessage("Something went wrong");
+	response.setData(empty);
+	response.setStatus("SUCCESS");
+	return ResponseEntity.ok(response);
+
+	}
 	}
 }

@@ -62,7 +62,6 @@ import com.technohertz.util.CommonUtil;
 import com.technohertz.util.GroupFirebase;
 import com.technohertz.util.GroupResponse;
 import com.technohertz.util.LikedUserOfPOll;
-import com.technohertz.util.PollLikeResponce;
 import com.technohertz.util.PollOptionResponce;
 import com.technohertz.util.PollResponce;
 import com.technohertz.util.ResponseObject;
@@ -1461,7 +1460,7 @@ public class GroupProfileController extends TimerTask {
 		Set<Integer> id = userMap.keySet();
 		List<String> name = new ArrayList<String>();
 		for (Integer userid : conList) {
-			if (contact.contains(userid)) {
+			if (!contact.contains(userid)) {
 				String userName = userMap.get(userid);
 				name.add(userName);
 				System.out.println(userName);
@@ -1473,7 +1472,8 @@ public class GroupProfileController extends TimerTask {
 		for (GroupPoll poll : groupPolls) {
 			LikedUserOfPOll userOfPoll = new LikedUserOfPOll();
 			userOfPoll.setPollName(poll.getPollName());
-			userOfPoll.setUserName(name);
+			userOfPoll.setGroupId(groupId);
+			userOfPoll.setUserLikesList(name);
 			polls.add(userOfPoll);
 		}
 

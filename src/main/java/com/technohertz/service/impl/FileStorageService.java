@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -29,6 +30,7 @@ import com.technohertz.exception.MyFileNotFoundException;
 import com.technohertz.model.AdminProfile;
 import com.technohertz.model.CardCategory;
 import com.technohertz.model.Cards;
+import com.technohertz.model.Chat;
 import com.technohertz.model.GroupPoll;
 import com.technohertz.model.GroupProfile;
 import com.technohertz.model.LikedUsers;
@@ -999,6 +1001,51 @@ public class FileStorageService {
 			public List<Integer> getContactIdList(Integer groupId)
 			{
 				return entityManager.createNativeQuery("select contact_id from group_profile_group_member where group_id=:groupId").setParameter("groupId", groupId).getResultList();
+			}
+			@SuppressWarnings("unchecked")
+			public List<Chat> getchatDataByYear(String userName, String dayType) {
+				 
+				LocalDateTime localdatetime=LocalDateTime.now().minusYears(1);
+				DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+				String formattedDateTime = localdatetime.format(formatter);
+				LocalDateTime localdatetime2=LocalDateTime.now();
+				DateTimeFormatter formatter2 = DateTimeFormatter.ISO_DATE_TIME;
+				String formattedDateTime2 = localdatetime2.format(formatter2);
+			return	entityManager.createNativeQuery("SELECT * from chat where user=:userName and timestamp <=:daysfrom ",Chat.class)
+				.setParameter("userName", userName)
+				.setParameter("daysfrom", formattedDateTime)
+				//.setParameter("daysUpto", formattedDateTime2)
+				.getResultList();
+			}
+			@SuppressWarnings("unchecked")
+			public List<Chat> getchatDataByMonth(String userName, String dayType) {
+				
+				LocalDateTime localdatetime=LocalDateTime.now().minusMonths(1);
+				DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+				String formattedDateTime = localdatetime.format(formatter);
+				LocalDateTime localdatetime2=LocalDateTime.now();
+				DateTimeFormatter formatter2 = DateTimeFormatter.ISO_DATE_TIME;
+				String formattedDateTime2 = localdatetime2.format(formatter2);
+				return	entityManager.createNativeQuery("SELECT * from chat where user=:userName and timestamp <=:daysfrom ",Chat.class)
+						.setParameter("userName", userName)
+						.setParameter("daysfrom", formattedDateTime)
+						//.setParameter("daysUpto", formattedDateTime2)
+						.getResultList();
+			}
+			@SuppressWarnings("unchecked")
+			public List<Chat> getchatDataByWeek(String userName, String dayType) {
+				
+				LocalDateTime localdatetime=LocalDateTime.now().minusDays(1);
+				DateTimeFormatter formatter = DateTimeFormatter.ISO_DATE_TIME;
+				String formattedDateTime = localdatetime.format(formatter);
+				LocalDateTime localdatetime2=LocalDateTime.now();
+				DateTimeFormatter formatter2 = DateTimeFormatter.ISO_DATE_TIME;
+				String formattedDateTime2 = localdatetime2.format(formatter2);
+				return	entityManager.createNativeQuery("SELECT * from chat where user=:userName and timestamp <=:daysfrom ",Chat.class)
+						.setParameter("userName", userName)
+						.setParameter("daysfrom", formattedDateTime)
+						//.setParameter("daysUpto", formattedDateTime2)
+						.getResultList();
 			}
 
 }
